@@ -1,0 +1,17 @@
+{
+  "name": "TBot",
+  "version": "1.0.0",
+  "description": "Help me",
+  "main": "tbot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "github:discordjs/discord.js",
+    "get-next-date": "^1.0.0",
+    "sqlite3": "^4.1.1"
+  }
+}
