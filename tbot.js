@@ -15,7 +15,7 @@ const eclairImg = new Discord.MessageAttachment("https://cdn.discordapp.com/atta
 
 
 
-
+//test
 
 //! Globar vars
 const pLength = config.prefix.length;
