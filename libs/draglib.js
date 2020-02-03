@@ -41,7 +41,7 @@ async function createRichEmbed(message) {
             var embed = new Discord.MessageEmbed()
                 .setFooter("#" + message.channel.name)
                 .setTimestamp(new Date(message.createdTimestamp))
-                .addField(String.fromCharCode(160), `[Go to message](${message.url})`);
+                .addField(String.fromCharCode(8203), `[Go to message](${message.url})`);
             if (message.author.avatarURL()) {
                 embed.setAuthor(message.author.username, message.author.avatarURL());
             }
