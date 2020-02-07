@@ -4,7 +4,7 @@
   "description": "Help me",
   "main": "tbot.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node tbot.js"
   },
   "keywords": [],
   "author": "",

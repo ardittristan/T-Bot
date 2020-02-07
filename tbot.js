@@ -120,7 +120,9 @@ client.on("message", async (message) => {
                 ".addgame <name>\n -adds game role\n\n" +
                 ".remind <wdhm> <message>\n -adds reminder in set amount of time, example: .remind 4d2m <message>\n\n" +
                 ".toggleregion\n -toggles the voice region between europe and russia\n\n" +
-                ".disconnect\n -disconnects you from your current vc channel" +
+                ".disconnect\n -disconnects you from your current vc channel\n\n" +
+                ".eventannounce <wdhm> <message>\n -adds announcement to #announcements with provided timestamp, example: .announce 1w one week later...\n\n" +
+                ".rolewho <roleid/role number>\n -shows members that have the role" +
                 "```"
             ).then(message =>
                 message.delete({ timeout: 30000 })
@@ -135,7 +137,6 @@ client.on("message", async (message) => {
             if (message.channel.id === config.vctalk && message.member.voice.channel != undefined) {
                 if (message.member.voice.channel.parentID === config.vccategory) {
                     message.member.voice.channel.setName(message.content.slice(pLength + 6).trim());
-                    console.log("test");
                     logChannel.send(`${authr}` + " set voice channel name to: `" + message.content.slice(pLength + 6).trim() + "`");
                 }
             }
@@ -372,6 +373,63 @@ client.on("message", async (message) => {
             }
             break;
         //#endregion
+
+        case "eventannounce":
+            //* makes announcement
+            //#region
+            var arg = message.content.slice(pLength + 13).trim();
+            var delayString = arg.substr(0, arg.indexOf(" "));
+            var timeNow = Date.now();
+            var time = new Date(timeNow + convertDelayStringToMS(delayString));
+            var messageText = "";
+            if (time.valueOf() === timeNow) {
+                messageText = arg;
+            } else {
+                messageText = arg.substr(delayString.length).trim();
+            }
+            if (time && (!(messageText === "") || !(delayString === ""))) {
+                var embed = new Discord.MessageEmbed()
+                    .setTimestamp(time)
+                    .setDescription(messageText + "\n");
+                guild.channels.resolve(config.announcements).send(embed);
+            }
+            message.delete({ timeout: 1000 });
+            break;
+        //#endregion
+
+        case "rolewho":
+            //#region 
+            var arg = message.content.slice(pLength + 7).trim();
+            if (arg.includes(" ")) {
+                roleId = arg.substr(0, arg.indexOf(" "));
+            } else {
+                roleId = arg;
+            }
+            if (!(roleId === "")) {
+                if (roleId.length < 16) {
+                    var rolecount = message.guild.roles.size - 2;
+                    message.guild.roles.forEach(role => {
+                        if (role.position === (rolecount - roleId)) {
+                            var memberlist = role.name + "\n```";
+                            role.members.forEach(memberId => {
+                                memberlist = memberlist.concat(memberId.user.username + "#" + memberId.user.discriminator + "\n");
+                            });
+                            message.channel.send(memberlist + "```", { disableEveryone: true });
+                        }
+                    });
+                } else
+                    if (roleId.length === 18) {
+                        var role = await message.guild.roles.fetch(roleId);
+                        var memberlist = role.name + "\n```";
+                        role.members.forEach(memberId => {
+                            memberlist = memberlist.concat(memberId.user.username + "#" + memberId.user.discriminator + "\n");
+                        });
+                        message.channel.send(memberlist + "```", { disableEveryone: true });
+                    }
+            }
+            message.delete({ timeout: 1000 });
+            break;
+        //#endregion
     }
 });
 //? End of commands
@@ -442,7 +500,7 @@ client.on("messageReactionAdd", async (messageReaction) => {
                         db.all(/*sql*/`SELECT MessageId FROM "Starred" WHERE MessageId = ? LIMIT 1`, [messageReaction.message.id], async function (err, rows) {
                             if (rows.length === 1) { exists = true; }
                             if (messageReaction.count >= Math.ceil(activeUsers * starDevider) + 1 && !exists) {
-                                guild.channels.resolve(config.starboard).send(await createRichEmbed(await messageReaction.message));
+                                guild.channels.resolve(config.starboard).send(await createRichEmbed(await messageReaction.message), { disableEveryone: true });
                                 db.run(/*sql*/`INSERT INTO Starred VALUES (?)`, [messageReaction.message.id]);
                                 starActive = false;
                             }
@@ -460,7 +518,7 @@ client.on("messageReactionAdd", async (messageReaction) => {
             db.all(/*sql*/`SELECT MessageId FROM "Starred" WHERE MessageId = ? LIMIT 1`, [messageReaction.message.id], async function (err, rows) {
                 if (rows.length === 1) { exists = true; }
                 if (messageReaction.count >= Math.ceil(activeUsers * starDevider) + 1 && !exists) {
-                    guild.channels.resolve(config.starboard).send(await createRichEmbed(await messageReaction.message));
+                    guild.channels.resolve(config.starboard).send(await createRichEmbed(await messageReaction.message, { disableEveryone: true }));
                     db.run(/*sql*/`INSERT INTO Starred VALUES (?)`, [messageReaction.message.id]);
                     starActive = false;
                 }
@@ -539,7 +597,7 @@ async function remindCheck() {
             if (rows.length !== 0) {
                 rows.forEach((row) => {
                     if (currDateTime >= row.DateTime) {
-                        guild.channels.resolve(config.defaultchannel).send("<@" + row.UserId + ">, you asked me to remind you: ```" + row.Reminder + "```");
+                        guild.channels.resolve(config.defaultchannel).send("<@" + row.UserId + ">, you asked me to remind you: ```" + row.Reminder + "```", { disableEveryone: true });
                         db.run(/*sql*/`DELETE FROM Reminders WHERE rowid=?`, row.id, function (err) {
                             if (err) {
                                 return console.error(err.message);
