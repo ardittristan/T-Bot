@@ -6,6 +6,8 @@ const { existsSync, mkdirSync } = require("fs");
 const { convertDelayStringToMS, createRichEmbed } = require("./libs/draglib");
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'], disabledEvents: ['TYPING_START'] });
 const config = require("./config.json");
+const GoogleSheets = require("google-spreadsheet");
+const doc = new GoogleSheets.GoogleSpreadsheet(config.spreadsheetid);
 
 //* Attachments
 const hazeImg = new Discord.MessageAttachment("https://i.imgur.com/DzzIppd.png", "Haze.png");
@@ -27,6 +29,8 @@ var starDevider = 0.15;
 //* amount of time passed without message to be considered inactive
 var activeTime = 3600000;
 var starActive = false;
+var bdaySheet;
+var daysSince1970Sheet;
 
 
 
@@ -701,6 +705,45 @@ async function setStatus(type, message, startup = false) {
         });
     });
 }
+
+//* init birthday sheet
+async function sheetSetup() {
+    doc.useApiKey(config.spreadsheetapikey)
+        .then(async function () {
+            doc.loadInfo()
+                .then(async function () {
+                    bdaySheet = doc.sheetsByIndex[0];
+                    daysSince1970Sheet = doc.sheetsByIndex[1];
+                    var timeout = GetNextDate(new Date(Date.now() - 3600000)).getTime() - (Date.now() - 3600000);
+                    setTimeout(function () {
+                        checkBirthday();
+                        setInterval(checkBirthday, 86400000);
+                    }, timeout);
+                });
+        });
+}
+
+//* check for birthdays
+async function checkBirthday() {
+    var rows = await bdaySheet.getRows();
+    var birthdayTimestamp = await daysSince1970Sheet.getRows();
+    var curTime = new Date(Date.now());
+    var curDay = curTime.getUTCDate();
+    var curMonth = curTime.getUTCMonth();
+    var birthdays = [];
+    rows.forEach(function (row, id) {
+        var day = birthdayTimestamp[id].day;
+        var month = birthdayTimestamp[id].month;
+        if (month == curMonth + 1 && day == curDay) {
+            birthdays.push({name: row.name, age: row.age})
+        }
+    });
+    if (birthdays != []) {
+        birthdays.forEach(data => {
+            guild.channels.fetch(config.announcements).send(`It is ${data.name}'s birthay today! Happy ${data.age} years!`)
+        })
+    }
+}
 //? End of functions
 
 
@@ -711,3 +754,4 @@ async function setStatus(type, message, startup = false) {
 setInterval(inviteCheck, 3600000);
 setInterval(remindCheck, 60000);
 setInterval(activeUserCheck, 600000);
+sheetSetup();
