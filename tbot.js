@@ -735,13 +735,13 @@ async function checkBirthday() {
         var day = birthdayTimestamp[id].day;
         var month = birthdayTimestamp[id].month;
         if (month == curMonth + 1 && day == curDay) {
-            birthdays.push({name: row.name, age: row.age})
+            birthdays.push({ name: row.name, age: row.age });
         }
     });
     if (birthdays != []) {
         birthdays.forEach(data => {
-            guild.channels.fetch(config.announcements).send(`It is ${data.name}'s birthay today! Happy ${data.age} years!`)
-        })
+            guild.channels.fetch(config.announcements).send(`It is ${data.name}'s birthay today! Happy ${data.age} years!`);
+        });
     }
 }
 //? End of functions
