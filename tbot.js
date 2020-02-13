@@ -423,7 +423,7 @@ client.on("message", async (message) => {
                     });
                 } else
                     if (roleId.length === 18) {
-                        var role = await message.guild.roles.fetch(roleId);
+                        var role = await message.guild.roles.fetch(roleId).catch(err => { return; });
                         var memberlist = role.name + "\n```";
                         role.members.forEach(memberId => {
                             memberlist = memberlist.concat(memberId.user.username + "#" + memberId.user.discriminator + "\n");
@@ -746,6 +746,15 @@ async function checkBirthday() {
 }
 //? End of functions
 
+
+
+
+//! database cleaning
+async function dbVacuum() {
+    db.run(/*sql*/`VACUUM "main"`);
+}
+dbVacuum;
+setInterval(dbVacuum, 86400000);
 
 
 
