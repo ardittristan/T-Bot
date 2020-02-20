@@ -2,6 +2,7 @@
 const sqlite3 = require("sqlite3");
 const Discord = require("discord.js");
 const GetNextDate = require("get-next-date");
+const GetMidnighDate = require("get-midnight-date");
 const { existsSync, mkdirSync } = require("fs");
 const { convertDelayStringToMS, createRichEmbed } = require("./libs/draglib");
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'], disabledEvents: ['TYPING_START'] });
@@ -354,14 +355,21 @@ client.on("message", async (message) => {
                     case "sun":
                         day = 0;
                         break;
+                    case "now":
+                        day = 8;
+                        break;
                 }
                 if (day === 7) { message.channel.send("Error"); return; }
                 var date = new Date(Date.now());
-                var ongoing = true;
-                while (ongoing) {
-                    date = GetNextDate(date);
-                    if (date.getDay() === day) {
-                        ongoing = false;
+                if (day === 8) {
+                    date = GetMidnighDate(date);
+                } else {
+                    var ongoing = true;
+                    while (ongoing) {
+                        date = GetNextDate(date);
+                        if (date.getDay() === day) {
+                            ongoing = false;
+                        }
                     }
                 }
                 var time = args[1].split(":");
