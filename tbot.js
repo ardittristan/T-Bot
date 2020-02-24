@@ -127,7 +127,8 @@ client.on("message", async (message) => {
                 ".toggleregion\n -toggles the voice region between europe and russia\n\n" +
                 ".disconnect\n -disconnects you from your current vc channel\n\n" +
                 ".eventannounce <wdhm> <message>\n -adds announcement to #announcements with provided timestamp, example: .announce 1w one week later...\n\n" +
-                ".rolewho <roleid/role number>\n -shows members that have the role" +
+                ".rolewho <roleid/role number>\n -shows members that have the role\n\n" +
+                ".birthday\n -posts link to birthday list" +
                 "```"
             ).then(message =>
                 message.delete({ timeout: 30000 })
@@ -440,6 +441,13 @@ client.on("message", async (message) => {
                     }
             }
             message.delete({ timeout: 1000 });
+            break;
+        //#endregion
+
+        case "birthday":
+            //#region 
+            message.channel.send(new Discord.MessageEmbed().addField(String.fromCharCode(8203), `[Birthday List](${config.birthdayurl})`));
+            message.delete(1000);
             break;
         //#endregion
     }
