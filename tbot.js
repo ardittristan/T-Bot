@@ -670,7 +670,7 @@ async function remindCheck() {
             if (rows.length !== 0) {
                 rows.forEach((row) => {
                     if (currDateTime >= row.DateTime) {
-                        guild.channels.resolve(config.defaultchannel).send("<@" + row.UserId + ">, you asked me to remind you: ```" + row.Reminder + "```", { disableEveryone: true });
+                        guild.channels.resolve(config.defaultchannel).send("<@" + row.UserId + ">, **you asked me to remind you:**" + row.Reminder, { disableEveryone: true });
                         db.run(/*sql*/`DELETE FROM Reminders WHERE rowid=?`, row.id, function (err) {
                             if (err) {
                                 return console.error(err.message);
