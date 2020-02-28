@@ -26,7 +26,7 @@ var logChannel;
 var guild;
 var activeUsers = 1;
 //* percentage of active needed for star + 1
-var starDevider = 0.15;
+var starDevider = 0.175;
 //* amount of time passed without message to be considered inactive
 var activeTime = 3600000;
 var starActive = false;
@@ -161,17 +161,15 @@ client.on("message", async (message) => {
             break;
         //#endregion
 
-        case "invite":
+        case "guestinvite":
             //* create invite link
             //#region
             if (message.channel.id === config.invitechannel) {
                 message.delete();
-                message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite =>
-                    message.channel.send(invite.url).then(message =>
-                        message.delete({ timeout: 30000 })
-                    )
+                message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true, temporary: true }).then(invite =>
+                    message.author.send(invite.url)
                 );
-                logChannel.send(`${authr}` + " made an invite");
+                logChannel.send(`${authr}` + " made a guest invite");
             }
             break;
         //#endregion
@@ -450,6 +448,22 @@ client.on("message", async (message) => {
             message.delete(1000);
             break;
         //#endregion
+
+        case "invite":
+            //* creates invite vote
+            //#region 
+            var arg = message.content.slice(pLength + 6).trim();
+            if (arg != "") {
+                await message.react('✅');
+                await message.react('❌');
+            } else {
+                message.channel.send("Please say who you want to invite").then(botMessage => {
+                    botMessage.delete({ timeout: 10000 });
+                });
+                message.delete({ timeout: 1000 });
+            }
+            break;
+        //#endregion
     }
 });
 //? End of commands
@@ -498,6 +512,45 @@ client.on("message", async (message) => {
             }
         }
     });
+    //#endregion
+});
+
+client.on("messageReactionAdd", async (messageReaction) => {
+    //* Invite
+    //#region 
+    if (messageReaction.partial) {
+        try {
+            await messageReaction.fetch().then(async function () {
+                await messageReaction.message.fetch().then(async function () {
+                    if (messageReaction.emoji.name === "✅" && guild.id === messageReaction.message.guild.id && messageReaction.message.content.startsWith(".invite")) {
+                        if (messageReaction.message.reactions.resolve("❌") != null) {
+                            if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 2) === 5) {
+                                messageReaction.message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
+                                    messageReaction.message.author.send(invite.url);
+                                    messageReaction.message.author.send(messageReaction.message);
+                                });
+                                messageReaction.message.delete(1000);
+                            }
+                        }
+                    }
+                });
+            });
+        } catch (error) {
+            console.log("Something went wrong when fetching the reaction: ", error);
+        }
+    } else {
+        if (messageReaction.emoji.name === "✅" && guild.id === messageReaction.message.guild.id && messageReaction.message.content.startsWith(".invite")) {
+            if (messageReaction.message.reactions.resolve("❌") != null) {
+                if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 2) === 5) {
+                    messageReaction.message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
+                        messageReaction.message.author.send(invite.url);
+                        messageReaction.message.author.send(messageReaction.message);
+                    });
+                    messageReaction.message.delete(1000);
+                }
+            }
+        }
+    }
     //#endregion
 });
 
