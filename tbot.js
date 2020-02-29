@@ -513,6 +513,16 @@ client.on("message", async (message) => {
         }
     });
     //#endregion
+
+    //* checks if game clip is an actual clip
+    //#region 
+    if (message.channel == config.clipchannel) {
+        if (!(message.content.includes("https://") || message.content.includes("http://") || message.attachments.array().length != 0)) {
+            message.delete();
+            message.author.send(`Please send only clips in <#${config.clipchannel}>`);
+        }
+    }
+    //#endregion
 });
 
 client.on("messageReactionAdd", async (messageReaction) => {
