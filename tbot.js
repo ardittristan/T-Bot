@@ -474,7 +474,7 @@ client.on("message", async (message) => {
 //! Other events
 
 client.on("emojiCreate", async (emoji) => {
-    guild.channels.resolve(config.defaultchannel).send("New emoji - " + emoji);
+    guild.channels.resolve(config.defaultchannel).send("New emoji - " + emoji.toString());
 });
 
 client.on("guildMemberUpdate", async (_old, member) => {
