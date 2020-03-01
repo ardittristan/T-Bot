@@ -19,10 +19,12 @@ const eclairImg = new Discord.MessageAttachment("https://cdn.discordapp.com/atta
 
 
 
-
 //! Globar vars
+/** @type {number} */
 const pLength = config.prefix.length;
+/** @type {Discord.TextChannel} */
 var logChannel;
+/** @type {Discord.Guild} */
 var guild;
 var activeUsers = 1;
 //* percentage of active needed for star + 1
