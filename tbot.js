@@ -34,6 +34,8 @@ var activeTime = 3600000;
 var starActive = false;
 var bdaySheet;
 var daysSince1970Sheet;
+//* percent of server users needed for sucessful invite
+var invitePercent = 0.15
 
 
 
@@ -97,6 +99,7 @@ client.on("ready", () => {
     remindCheck();
     activeUserCheck();
     setStatus(undefined, undefined, true);
+    invitePercentageInfo();
     console.log("Booted");
 });
 
@@ -534,9 +537,9 @@ client.on("messageReactionAdd", async (messageReaction) => {
         try {
             await messageReaction.fetch().then(async function () {
                 await messageReaction.message.fetch().then(async function () {
-                    if (messageReaction.emoji.name === "✅" && guild.id === messageReaction.message.guild.id && messageReaction.message.content.startsWith(".invite")) {
+                    if (messageReaction.emoji.name === "✅" && guild.id === messageReaction.message.guild.id && messageReaction.message.content.startsWith(".invite") && messageReaction.message.channel.id === config.invitechannel) {
                         if (messageReaction.message.reactions.resolve("❌") != null) {
-                            if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 2) === 5) {
+                            if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 2) === Math.ceil(guild.memberCount * invitePercent)) {
                                 messageReaction.message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
                                     messageReaction.message.author.send(invite.url);
                                     messageReaction.message.author.send(messageReaction.message);
@@ -551,9 +554,9 @@ client.on("messageReactionAdd", async (messageReaction) => {
             console.log("Something went wrong when fetching the reaction: ", error);
         }
     } else {
-        if (messageReaction.emoji.name === "✅" && guild.id === messageReaction.message.guild.id && messageReaction.message.content.startsWith(".invite")) {
+        if (messageReaction.emoji.name === "✅" && guild.id === messageReaction.message.guild.id && messageReaction.message.content.startsWith(".invite") && messageReaction.message.channel.id === config.invitechannel) {
             if (messageReaction.message.reactions.resolve("❌") != null) {
-                if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 2) === 5) {
+                if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 2) === Math.ceil(guild.memberCount * invitePercent)) {
                     messageReaction.message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
                         messageReaction.message.author.send(invite.url);
                         messageReaction.message.author.send(messageReaction.message);
@@ -728,6 +731,11 @@ async function activeUserCheck() {
     });
 }
 
+//* invite info channel description
+async function invitePercentageInfo() {
+    guild.channels.resolve(config.invitechannel).edit({topic: `${Math.ceil(guild.memberCount * invitePercent)} votes + ❌ modifier needed for success`})
+}
+
 //* status set
 async function setStatus(type, message, startup = false) {
     var promiseOutput = new Promise((output) => {
@@ -842,6 +850,7 @@ setInterval(dbVacuum, 86400000);
 
 //! Intervals
 setInterval(inviteCheck, 3600000);
+setInterval(invitePercentageInfo, 3600000)
 setInterval(remindCheck, 60000);
 setInterval(activeUserCheck, 600000);
 sheetSetup();
