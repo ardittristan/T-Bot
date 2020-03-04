@@ -467,6 +467,7 @@ client.on("message", async (message) => {
                         message.author.send(message);
                     });
                     message.delete(1000);
+                    message.channel.send(`${arg}'s invite has gone trough`);
                 }, 86400000);
             } else {
                 message.channel.send("Please say who you want to invite").then(botMessage => {
@@ -553,6 +554,7 @@ client.on("messageReactionAdd", async (messageReaction) => {
                                         messageReaction.message.author.send(messageReaction.message);
                                     });
                                     messageReaction.message.delete(1000);
+                                    messageReaction.message.channel.send(`${arg}'s invite has gone trough`);
                                 }
                             }
                         }
@@ -572,6 +574,7 @@ client.on("messageReactionAdd", async (messageReaction) => {
                             messageReaction.message.author.send(messageReaction.message);
                         });
                         messageReaction.message.delete(1000);
+                        messageReaction.message.channel.send(`${arg}'s invite has gone trough`);
                     }
                 }
             }
