@@ -35,7 +35,7 @@ var starActive = false;
 var bdaySheet;
 var daysSince1970Sheet;
 //* percent of server users needed for sucessful invite
-var invitePercent = 0.15;
+var invitePercent = 0.10;
 
 
 
@@ -92,7 +92,7 @@ client.login(config.token);
 
 client.on("ready", () => {
 
-    guild = client.guilds.get(config.guildid);
+    guild = client.guilds.resolve(config.guildid);
     logChannel = guild.channels.resolve(config.logchannel);
 
     inviteCheck();
@@ -216,7 +216,7 @@ client.on("message", async (message) => {
         case "botrole":
             //* changes bot role name
             //#region
-            guild.roles.get(config.botroleid).setName(message.content.slice(pLength + 7).trim());
+            guild.roles.resolve(config.botroleid).setName(message.content.slice(pLength + 7).trim());
             logChannel.send(`${authr}` + " set bot role name to: `" + message.content.slice(pLength + 7).trim() + "`");
             message.delete({ timeout: 1000 });
             break;
@@ -227,7 +227,7 @@ client.on("message", async (message) => {
             //#region
             if (message.channel.id === config.adddefaultchannel && message.mentions.members.first()) {
                 message.mentions.members.first().roles.add(config.defaultrole);
-                client.channels.get(config.defaultchannel).send(message.mentions.members.first(), hazeImg);
+                client.channels.resolve(config.defaultchannel).send(message.mentions.members.first(), hazeImg);
             }
             else if (message.channel.id === config.adddefaultchannel) {
                 //* if no input lists users without haze
@@ -240,7 +240,7 @@ client.on("message", async (message) => {
                     }
                     i++;
                     if (i === length) {
-                        client.channels.get(config.adddefaultchannel).send(output);
+                        client.channels.resolve(config.adddefaultchannel).send(output);
                     }
                 });
             }
@@ -250,7 +250,7 @@ client.on("message", async (message) => {
         case "addgame":
             //* adds pingable game role
             //#region
-            guild.roles.create({ data: { name: message.content.slice(pLength + 7).trim(), mentionable: true, position: guild.roles.find(r => r.id === config.defaultrole).rawPosition - 1 } });
+            guild.roles.create({ data: { name: message.content.slice(pLength + 7).trim(), mentionable: true, position: (await guild.roles.fetch(config.defaultrole)).rawPosition - 1 } });
             logChannel.send(`${authr}` + " added game role: `" + message.content.slice(pLength + 7).trim() + "`");
             message.delete({ timeout: 1000 });
             break;
@@ -302,7 +302,7 @@ client.on("message", async (message) => {
             //* disconnects user from current connected voice channel
             //#region
             if (message.member.voice.channel != undefined) {
-                guild.members.find(m => m.id === authr.id).voice.setChannel(null);
+                guild.members.resolve(authr.id).voice.setChannel(null);
             }
             message.delete({ timeout: 1000 });
             break;
@@ -311,7 +311,7 @@ client.on("message", async (message) => {
         case "addcampaign":
             //* adds campaign role to someone
             //#region
-            if (message.member.roles.has(config.gmrole) || authr.id == guild.ownerID) {
+            if (message.member.roles.cache.has(config.gmrole) || authr.id == guild.ownerID) {
                 db.run(/*sql*/`INSERT INTO Campaign VALUES (?)`, [message.mentions.members.first().id]);
                 message.mentions.members.first().roles.add(config.campaignrole);
                 message.channel.send("Gave user campaign role.");
@@ -321,8 +321,9 @@ client.on("message", async (message) => {
 
         case "removecampaign":
             //* removes campaign role from someone
+            //TODO Fix that it actually removes id from database
             //#region
-            if (message.member.roles.has(config.gmrole) || authr.id == guild.ownerID) {
+            if (message.member.roles.cache.has(config.gmrole) || authr.id == guild.ownerID) {
                 if (await campaignRole(message.mentions.members.first(), true)) {
                     message.channel.send("Removed campaign role from user.");
                 };
@@ -415,6 +416,8 @@ client.on("message", async (message) => {
 
         case "rolewho":
             //#region 
+            /** @type {string} */
+            var roleId;
             var arg = message.content.slice(pLength + 7).trim();
             if (arg.includes(" ")) {
                 roleId = arg.substr(0, arg.indexOf(" "));
@@ -424,7 +427,7 @@ client.on("message", async (message) => {
             if (!(roleId === "")) {
                 if (roleId.length < 16) {
                     var rolecount = message.guild.roles.size - 2;
-                    message.guild.roles.forEach(role => {
+                    message.guild.roles.cache.forEach(role => {
                         if (role.position === (rolecount - roleId)) {
                             var memberlist = role.name + "\n```";
                             role.members.forEach(memberId => {
@@ -462,12 +465,14 @@ client.on("message", async (message) => {
                 await message.react('✅');
                 await message.react('❌');
                 setTimeout(function () {
-                    message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
-                        message.author.send(invite.url);
-                        message.author.send(message);
-                    });
-                    message.delete(1000);
-                    message.channel.send(`${arg}'s invite has gone trough`);
+                    if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 2) >= Math.ceil(guild.memberCount * invitePercent)) {
+                        message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
+                            message.author.send(invite.url);
+                            message.author.send(message);
+                        });
+                        message.delete(1000);
+                        message.channel.send(`${arg}'s invite has gone trough`);
+                    }
                 }, 86400000);
             } else {
                 message.channel.send("Please say who you want to invite").then(botMessage => {
@@ -475,6 +480,13 @@ client.on("message", async (message) => {
                 });
                 message.delete({ timeout: 1000 });
             }
+            break;
+        //#endregion
+
+        case "haze2":
+            //* copypasta
+            //#region 
+            message.channel.send(`I've come to make an announcement: HaZe clan are bitch-ass motherfuckers. They pissed on my fucking wife. That's right, they took their little, tiny dicks out and they pissed on my fucking wife and they said their dicks were ***this big*** and I said "that's disgusting!" so I'm making a callout post on my twitter dot com: HaZe clan, you got small dicks. They're the size of Poxy except WAY smaller. And guess what? HERE'S WHAT MY DICK LOOK LIKE ***PFFFFFFFFGJT*** That's right, baby, all point, no quills, no pillows- look at that it looks like two balls and a bong. You fucked my wife so guess what? I'M GONNA FUCK THE EARTH. THAT'S RIGHT, THIS IS WHAT YOU GET, ***MY SUPER LASER PISS!*** Except I'm not gonna piss on the Earth, I'm gonna go HIGHER. I'm pissing on THE MOOOOON! HOW DO YOU LIKE THAT OBAMA? I PISSED ON THE MOON YOU IDIOT! You have twenty three hours before the PISS DRRRRRROPLLLLLETS HIT THE FUCKING EARTH! Now get out of my fucking sight before I piss on you too!`);
             break;
         //#endregion
     }
@@ -492,7 +504,7 @@ client.on("emojiCreate", async (emoji) => {
 
 client.on("guildMemberUpdate", async (_old, member) => {
     //* checks if user gives themselve the campaign role when they're not allowed to
-    if (member.roles.has(config.campaignrole)) {
+    if (member.roles.cache.get(config.campaignrole)) {
         if (!await campaignRole(member)) {
             member.roles.remove(config.campaignrole);
         }
@@ -554,7 +566,7 @@ client.on("messageReactionAdd", async (messageReaction) => {
                                         messageReaction.message.author.send(messageReaction.message);
                                     });
                                     messageReaction.message.delete(1000);
-                                    messageReaction.message.channel.send(`${arg}'s invite has gone trough`);
+                                    messageReaction.message.channel.send(`${arg}'s invite has gone through`);
                                 }
                             }
                         }
@@ -574,7 +586,7 @@ client.on("messageReactionAdd", async (messageReaction) => {
                             messageReaction.message.author.send(messageReaction.message);
                         });
                         messageReaction.message.delete(1000);
-                        messageReaction.message.channel.send(`${arg}'s invite has gone trough`);
+                        messageReaction.message.channel.send(`${arg}'s invite has gone through`);
                     }
                 }
             }
@@ -615,7 +627,7 @@ client.on("messageReactionAdd", async (messageReaction) => {
             starActive = false;
         }
     } else {
-        if (messageReaction.emoji.name === "⭐" && !messageReaction.message.system && guild.id === messageReaction.message.guild.id) {
+        if (messageReaction.emoji.name === "⭐" && guild.id === messageReaction.message.guild.id) {
             var exists = false;
             db.all(/*sql*/`SELECT MessageId FROM "Starred" WHERE MessageId = ? LIMIT 1`, [messageReaction.message.id], async function (err, rows) {
                 if (rows.length === 1) { exists = true; }
@@ -643,7 +655,7 @@ async function sleep(ms) {
 }
 
 //* check if someone is supposed to have the campaign role
-async function campaignRole(user, deleteR = false) {
+async function campaignRole(/** @type {Discord.GuildMember} */user, deleteR = false) {
     let sql = /*sql*/ `SELECT   UserId,
                                 _rowid_ id
                         FROM Campaign
