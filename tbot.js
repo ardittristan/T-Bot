@@ -855,7 +855,7 @@ async function checkBirthday() {
     });
     if (birthdays != []) {
         birthdays.forEach(data => {
-            guild.channels.fetch(config.announcements).send(`It is ${data.name}'s birthday today! Happy ${data.age} years!`);
+            guild.channels.resolve(config.announcements).send(`It is ${data.name}'s birthday today! Happy ${data.age} years!`);
         });
     }
 }
