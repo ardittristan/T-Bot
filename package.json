@@ -14,6 +14,7 @@
     "get-midnight-date": "^1.0.0",
     "get-next-date": "^1.0.0",
     "google-spreadsheet": "^3.0.9",
+    "lodash.sample": "^4.2.1",
     "sqlite3": "^4.1.1"
   }
 }

@@ -3,6 +3,7 @@ const sqlite3 = require("sqlite3");
 const Discord = require("discord.js");
 const GetNextDate = require("get-next-date");
 const GetMidnighDate = require("get-midnight-date");
+const sample = require("lodash.sample");
 const { existsSync, mkdirSync } = require("fs");
 const { convertDelayStringToMS, createRichEmbed } = require("./libs/draglib");
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'], disabledEvents: ['TYPING_START'] });
@@ -36,6 +37,8 @@ var bdaySheet;
 var daysSince1970Sheet;
 //* percent of server users needed for sucessful invite
 var invitePercent = 0.10;
+/** @type {string[]} */
+var birthdayQuotes;
 
 
 
@@ -453,7 +456,7 @@ client.on("message", async (message) => {
         case "birthday":
             //#region 
             message.channel.send(new Discord.MessageEmbed().addField(String.fromCharCode(8203), `[Birthday List](${config.birthdayurl})`));
-            message.delete(1000);
+            message.delete({ timeout: 1000 });
             break;
         //#endregion
 
@@ -470,7 +473,7 @@ client.on("message", async (message) => {
                             message.author.send(invite.url);
                             message.author.send(message);
                         });
-                        message.delete(1000);
+                        message.delete({ timeout: 1000 });
                         message.channel.send(`${arg}'s invite has gone trough`);
                     }
                 }, 86400000);
@@ -565,7 +568,7 @@ client.on("messageReactionAdd", async (messageReaction) => {
                                         messageReaction.message.author.send(invite.url);
                                         messageReaction.message.author.send(messageReaction.message);
                                     });
-                                    messageReaction.message.delete(1000);
+                                    messageReaction.message.delete({ timeout: 1000 });
                                     messageReaction.message.channel.send(`${arg}'s invite has gone through`);
                                 }
                             }
@@ -585,7 +588,7 @@ client.on("messageReactionAdd", async (messageReaction) => {
                             messageReaction.message.author.send(invite.url);
                             messageReaction.message.author.send(messageReaction.message);
                         });
-                        messageReaction.message.delete(1000);
+                        messageReaction.message.delete({ timeout: 1000 });
                         messageReaction.message.channel.send(`${arg}'s invite has gone through`);
                     }
                 }
@@ -836,6 +839,11 @@ async function sheetSetup() {
                     }, timeout);
                 });
         });
+
+    birthdayQuotes = [
+        "It is {name}'s birthday today! Happy {age} years!",
+        "{name} is already {age} years old! Happy birthday!"
+    ];
 }
 
 //* check for birthdays
@@ -855,7 +863,8 @@ async function checkBirthday() {
     });
     if (birthdays != []) {
         birthdays.forEach(data => {
-            guild.channels.resolve(config.announcements).send(`It is ${data.name}'s birthday today! Happy ${data.age} years!`);
+            birthdayText(data);
+            guild.channels.resolve(config.announcements).send(sample(birthdayQuotes).replace("{name}", data.name).replace("{age}", data.age));
         });
     }
 }
