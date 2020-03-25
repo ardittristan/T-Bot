@@ -136,7 +136,8 @@ client.on("message", async (message) => {
                 ".disconnect\n -disconnects you from your current vc channel\n\n" +
                 ".eventannounce <wdhm> <message>\n -adds announcement to #announcements with provided timestamp, example: .announce 1w one week later...\n\n" +
                 ".rolewho <roleid/role number>\n -shows members that have the role\n\n" +
-                ".birthday\n -posts link to birthday list" +
+                ".birthday\n -posts link to birthday list\n\n" +
+                ".jumbo <emoji>\n -makes emoji big" +
                 "```"
             ).then(message =>
                 message.delete({ timeout: 30000 })
@@ -492,6 +493,24 @@ client.on("message", async (message) => {
             message.channel.send(`I've come to make an announcement: HaZe clan are bitch-ass motherfuckers. They pissed on my fucking wife. That's right, they took their little, tiny dicks out and they pissed on my fucking wife and they said their dicks were ***this big*** and I said "that's disgusting!" so I'm making a callout post on my twitter dot com: HaZe clan, you got small dicks. They're the size of Poxy except WAY smaller. And guess what? HERE'S WHAT MY DICK LOOK LIKE ***PFFFFFFFFGJT*** That's right, baby, all point, no quills, no pillows- look at that it looks like two balls and a bong. You fucked my wife so guess what? I'M GONNA FUCK THE EARTH. THAT'S RIGHT, THIS IS WHAT YOU GET, ***MY SUPER LASER PISS!*** Except I'm not gonna piss on the Earth, I'm gonna go HIGHER. I'm pissing on THE MOOOOON! HOW DO YOU LIKE THAT OBAMA? I PISSED ON THE MOON YOU IDIOT! You have twenty three hours before the PISS DRRRRRROPLLLLLETS HIT THE FUCKING EARTH! Now get out of my fucking sight before I piss on you too!`);
             break;
         //#endregion
+
+        case "jumbo":
+            //* big emotes
+            //#region
+            if (message.content.includes("<a:")) {
+                var emojiId = message.content.match(/(?<=\<a:.*?:)([0-9]*?)(?=\>)/g);
+                if (emojiId != []) {
+                    message.channel.send(new Discord.MessageEmbed().setAuthor(message.author.username, message.author.avatarURL()).setImage(`https://cdn.discordapp.com/emojis/${emojiId[0]}.gif`));
+                }
+            } else {
+                var emojiId = message.content.match(/(?<=\<:.*?:)([0-9]*?)(?=\>)/g);
+                if (emojiId != []) {
+                    message.channel.send(new Discord.MessageEmbed().setAuthor(message.author.username, message.author.avatarURL()).setImage(`https://cdn.discordapp.com/emojis/${emojiId[0]}.png`));
+                }
+            }
+            message.delete({ timeout: 1000 });
+            break;
+        //#endregion
     }
 });
 //? End of commands
@@ -714,7 +733,7 @@ async function remindCheck() {
             if (rows.length !== 0) {
                 rows.forEach((row) => {
                     if (currDateTime >= row.DateTime) {
-                        guild.channels.resolve(config.defaultchannel).send("<@" + row.UserId + ">, **you asked me to remind you:**" + row.Reminder, { disableEveryone: true });
+                        guild.channels.resolve(config.defaultchannel).send("<@" + row.UserId + ">, **you asked me to remind you:** " + row.Reminder, { disableEveryone: true });
                         db.run(/*sql*/`DELETE FROM Reminders WHERE rowid=?`, row.id, function (err) {
                             if (err) {
                                 return console.error(err.message);
