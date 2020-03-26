@@ -1,5 +1,5 @@
 {
-  "name": "TBot",
+  "name": "tbot",
   "version": "1.0.0",
   "description": "Help me",
   "main": "tbot.js",
@@ -13,8 +13,11 @@
     "discord.js": "github:discordjs/discord.js",
     "get-midnight-date": "^1.0.0",
     "get-next-date": "^1.0.0",
+    "gifsicle": "^5.0.0",
     "google-spreadsheet": "^3.0.9",
+    "images-downloader": "^1.0.3",
     "lodash.sample": "^4.2.1",
+    "sharp": "^0.25.2",
     "sqlite3": "^4.1.1"
   }
 }

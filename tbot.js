@@ -4,7 +4,10 @@ const Discord = require("discord.js");
 const GetNextDate = require("get-next-date");
 const GetMidnighDate = require("get-midnight-date");
 const sample = require("lodash.sample");
-const { existsSync, mkdirSync } = require("fs");
+const { existsSync, mkdirSync, unlinkSync } = require("fs");
+const { execSync } = require('child_process');
+const imageDownload = require('images-downloader').images;
+const sharp = require('sharp');
 const { convertDelayStringToMS, createRichEmbed } = require("./libs/draglib");
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'], disabledEvents: ['TYPING_START'] });
 const config = require("./config.json");
@@ -37,16 +40,26 @@ var bdaySheet;
 var daysSince1970Sheet;
 //* percent of server users needed for sucessful invite
 var invitePercent = 0.10;
-/** @type {string[]} */
-var birthdayQuotes;
+//* list of messages to send for birthday message
+var birthdayQuotes = [
+    "It is {name}'s birthday today! Happy {age} years!",
+    "{name} is already {age} years old! Happy birthday!"
+];
+//* pixel size of jumbo emotes
+var jumboSize = 128;
 
 
+
+
+//! Init temp folder
+if (!existsSync("./tmp")) {
+    mkdirSync("./tmp");
+}
 
 
 //! Init database
-var dir = "./db";
-if (!existsSync(dir)) {
-    mkdirSync(dir);
+if (!existsSync("./db")) {
+    mkdirSync("./db");
 }
 let db = new sqlite3.Database("./db/database.db", sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
     if (err) {
@@ -500,12 +513,33 @@ client.on("message", async (message) => {
             if (message.content.includes("<a:")) {
                 var emojiId = message.content.match(/(?<=\<a:.*?:)([0-9]*?)(?=\>)/g);
                 if (emojiId != []) {
-                    message.channel.send(new Discord.MessageEmbed().setAuthor(message.author.username, message.author.avatarURL()).setImage(`https://cdn.discordapp.com/emojis/${emojiId[0]}.gif`));
+                    imageDownload([`https://cdn.discordapp.com/emojis/${emojiId[0]}.gif`], './tmp').then(result => {
+                        execSync(`node "${__dirname}/node_modules/gifsicle/cli.js" --resize-width ${jumboSize} -o ${result[0].filename} ${result[0].filename}`);
+                        var attachment = new Discord.MessageAttachment(result[0].filename, 'unknown.gif');
+                        var embed = new Discord.MessageEmbed()
+                            .setAuthor(message.author.username, message.author.avatarURL())
+                            .attachFiles(attachment)
+                            .setImage('attachment://unknown.gif');
+                        message.channel.send(embed).then(() => {
+                            unlinkSync(result[0].filename);
+                        });
+                    });
                 }
             } else {
                 var emojiId = message.content.match(/(?<=\<:.*?:)([0-9]*?)(?=\>)/g);
                 if (emojiId != []) {
-                    message.channel.send(new Discord.MessageEmbed().setAuthor(message.author.username, message.author.avatarURL()).setImage(`https://cdn.discordapp.com/emojis/${emojiId[0]}.png`));
+                    imageDownload([`https://cdn.discordapp.com/emojis/${emojiId[0]}.png`], './tmp').then(async result => {
+                        sharp(result[0].filename).resize(jumboSize).toBuffer().then(image => {
+                            var attachment = new Discord.MessageAttachment(image, 'unknown.png');
+                            var embed = new Discord.MessageEmbed()
+                                .setAuthor(message.author.username, message.author.avatarURL())
+                                .attachFiles(attachment)
+                                .setImage('attachment://unknown.png');
+                            message.channel.send(embed).then(() => {
+                                unlinkSync(result[0].filename);
+                            });
+                        });
+                    });
                 }
             }
             message.delete({ timeout: 1000 });
@@ -858,11 +892,6 @@ async function sheetSetup() {
                     }, timeout);
                 });
         });
-
-    birthdayQuotes = [
-        "It is {name}'s birthday today! Happy {age} years!",
-        "{name} is already {age} years old! Happy birthday!"
-    ];
 }
 
 //* check for birthdays
