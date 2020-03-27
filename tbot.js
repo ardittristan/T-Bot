@@ -39,7 +39,7 @@ var starActive = false;
 var bdaySheet;
 var daysSince1970Sheet;
 //* percent of server users needed for sucessful invite
-var invitePercent = 0.10;
+var invitePercent = 0.09;
 //* list of messages to send for birthday message
 var birthdayQuotes = [
     "It is {name}'s birthday today! Happy {age} years!",
@@ -47,6 +47,7 @@ var birthdayQuotes = [
 ];
 //* pixel size of jumbo emotes
 var jumboSize = 128;
+var hazeAmount = 0;
 
 
 
@@ -249,10 +250,10 @@ client.on("message", async (message) => {
             else if (message.channel.id === config.adddefaultchannel) {
                 //* if no input lists users without haze
                 var output = "**Members without haze:**\n";
-                var length = message.guild.members.array().length;
+                var length = message.guild.members.cache.array().length;
                 var i = 0;
-                message.guild.members.forEach(function (member) {
-                    if (!member.roles.has(config.defaultrole) && !member.user.bot) {
+                message.guild.members.cache.forEach(function (member) {
+                    if (!member.roles.cache.has(config.defaultrole) && !member.user.bot) {
                         output = output + `${member}` + " `" + member.id + "`\n";
                     }
                     i++;
@@ -615,14 +616,14 @@ client.on("messageReactionAdd", async (messageReaction) => {
                 await messageReaction.message.fetch().then(async function () {
                     if (messageReaction.emoji.name === "✅" && guild.id === messageReaction.message.guild.id && messageReaction.message.content.startsWith(".invite") && messageReaction.message.channel.id === config.invitechannel) {
                         if (messageReaction.message.reactions.resolve("❌") != null) {
-                            if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 2) >= Math.ceil(guild.memberCount * invitePercent)) {
+                            if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 1.5) >= Math.ceil(hazeAmount * invitePercent)) {
                                 if (messageReaction.message.createdTimestamp + 86400000 < Date.now()) {
                                     messageReaction.message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
                                         messageReaction.message.author.send(invite.url);
                                         messageReaction.message.author.send(messageReaction.message);
                                     });
                                     messageReaction.message.delete({ timeout: 1000 });
-                                    messageReaction.message.channel.send(`${arg}'s invite has gone through`);
+                                    messageReaction.message.channel.send(`${messageReaction.message.content.slice(pLength + 6).trim()}'s invite has gone through`);
                                 }
                             }
                         }
@@ -635,14 +636,14 @@ client.on("messageReactionAdd", async (messageReaction) => {
     } else {
         if (messageReaction.emoji.name === "✅" && guild.id === messageReaction.message.guild.id && messageReaction.message.content.startsWith(".invite") && messageReaction.message.channel.id === config.invitechannel) {
             if (messageReaction.message.reactions.resolve("❌") != null) {
-                if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 2) >= Math.ceil(guild.memberCount * invitePercent)) {
+                if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 1.5) >= Math.ceil(hazeAmount * invitePercent)) {
                     if (messageReaction.message.createdTimestamp + 86400000 < Date.now()) {
                         messageReaction.message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
                             messageReaction.message.author.send(invite.url);
                             messageReaction.message.author.send(messageReaction.message);
                         });
                         messageReaction.message.delete({ timeout: 1000 });
-                        messageReaction.message.channel.send(`${arg}'s invite has gone through`);
+                        messageReaction.message.channel.send(`${messageReaction.message.content.slice(pLength + 6).trim()}'s invite has gone through`);
                     }
                 }
             }
@@ -815,7 +816,9 @@ async function activeUserCheck() {
 
 //* invite info channel description
 async function invitePercentageInfo() {
-    guild.channels.resolve(config.invitechannel).edit({ topic: `${Math.ceil(guild.memberCount * invitePercent)} votes + ❌ modifier needed for success` });
+    guild.roles.fetch(config.defaultrole).then(role => {hazeAmount = role.members.array().length;}).then(() => {
+        guild.channels.resolve(config.invitechannel).edit({ topic: `${Math.ceil(hazeAmount * invitePercent)} votes + ❌ modifier needed for success` });
+    });
 }
 
 //* status set
