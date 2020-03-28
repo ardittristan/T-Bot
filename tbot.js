@@ -914,7 +914,6 @@ async function checkBirthday() {
     });
     if (birthdays != []) {
         birthdays.forEach(data => {
-            birthdayText(data);
             guild.channels.resolve(config.announcements).send(sample(birthdayQuotes).replace("{name}", data.name).replace("{age}", data.age));
         });
     }
