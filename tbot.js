@@ -1,5 +1,5 @@
 //! Imports
-const sqlite3 = require("sqlite3");
+const { Database, OPEN_READWRITE, OPEN_CREATE } = require("sqlite3");
 const Discord = require("discord.js");
 const GetNextDate = require("get-next-date");
 const GetMidnighDate = require("get-midnight-date");
@@ -11,8 +11,8 @@ const sharp = require('sharp');
 const { convertDelayStringToMS, createRichEmbed } = require("./libs/draglib");
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'], disabledEvents: ['TYPING_START'] });
 const config = require("./config.json");
-const GoogleSheets = require("google-spreadsheet");
-const doc = new GoogleSheets.GoogleSpreadsheet(config.spreadsheetid);
+const { GoogleSpreadsheet } = require("google-spreadsheet");
+const doc = new GoogleSpreadsheet(config.spreadsheetid);
 
 //* Attachments
 const hazeImg = new Discord.MessageAttachment("https://i.imgur.com/DzzIppd.png", "Haze.png");
@@ -39,11 +39,12 @@ var starActive = false;
 var bdaySheet;
 var daysSince1970Sheet;
 //* percent of server users needed for sucessful invite
-var invitePercent = 0.09;
+var invitePercent = 0.10;
 //* list of messages to send for birthday message
 var birthdayQuotes = [
     "It is {name}'s birthday today! Happy {age} years!",
-    "{name} is already {age} years old! Happy birthday!"
+    "{name} is already {age} years old! Happy birthday!",
+    "Oh god oh fuck, {name} is already {age} 🤯\n Have a great birthday!"
 ];
 //* pixel size of jumbo emotes
 var jumboSize = 128;
@@ -62,11 +63,11 @@ if (!existsSync("./tmp")) {
 if (!existsSync("./db")) {
     mkdirSync("./db");
 }
-let db = new sqlite3.Database("./db/database.db", sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+let db = new Database("./db/database.db", OPEN_READWRITE | OPEN_CREATE, (err) => {
     if (err) {
         console.error(err.message);
     }
-    console.log("connected to Reminder db");
+    console.log("connected to Main db");
     //* creates table for reminders
     db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "Reminders" ("DateTime" INTEGER NOT NULL, "UserId" TEXT NOT NULL, "Reminder" TEXT NOT NULL)`, function (err) {
         if (err) {
@@ -93,6 +94,18 @@ let db = new sqlite3.Database("./db/database.db", sqlite3.OPEN_READWRITE | sqlit
     });
     //* creates table for bot status
     db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "Status" ("Type" TEXT NOT NULL, "Message" TEXT NOT NULL)`, function (err) {
+        if (err) {
+            console.error(err.message);
+        }
+    });
+});
+let messageDB = new Database("./db/messages.db", OPEN_READWRITE | OPEN_CREATE, (err) => {
+    if (err) {
+        console.error(err.message);
+    }
+    console.log("connected to Message db");
+    //* creates table for messages
+    messageDB.run(/*sql*/`CREATE TABLE IF NOT EXISTS "Messages" ("Word" TEXT, "Count" INTEGER)`, function (err) {
         if (err) {
             console.error(err.message);
         }
@@ -339,7 +352,6 @@ client.on("message", async (message) => {
 
         case "removecampaign":
             //* removes campaign role from someone
-            //TODO Fix that it actually removes id from database
             //#region
             if (message.member.roles.cache.has(config.gmrole) || authr.id == guild.ownerID) {
                 if (await campaignRole(message.mentions.members.first(), true)) {
@@ -515,7 +527,7 @@ client.on("message", async (message) => {
                 var emojiId = message.content.match(/(?<=\<a:.*?:)([0-9]*?)(?=\>)/g);
                 if (emojiId != []) {
                     imageDownload([`https://cdn.discordapp.com/emojis/${emojiId[0]}.gif`], './tmp').then(result => {
-                        execSync(`node "${__dirname}/node_modules/gifsicle/cli.js" --resize-width ${jumboSize} -o ${result[0].filename} ${result[0].filename}`);
+                        execSync(`node "${__dirname}/node_modules/gifsicle/cli.js" --resize-width ${jumboSize} --colors 256 -o ${result[0].filename} ${result[0].filename}`);
                         var attachment = new Discord.MessageAttachment(result[0].filename, 'unknown.gif');
                         var embed = new Discord.MessageEmbed()
                             .setAuthor(message.author.username, message.author.avatarURL())
@@ -568,6 +580,35 @@ client.on("guildMemberUpdate", async (_old, member) => {
     };
 });
 
+client.on("message", async (message) => {
+    //* adds word to list/adds count
+    //#region 
+    let sql = /*sql*/`SELECT    Word,
+                                Count,
+                                _rowid_ id
+                        FROM Messages
+                        ORDER BY _rowid_`;
+    messageDB.all(sql, [], (err, rows) => {
+        if (err) {
+            return;
+        }
+        if (!message.author.bot) {
+            message.content.split(" ").forEach(word => {
+                var exists = false;
+                rows.forEach(row => {
+                    if (row.Word === word) {
+                        messageDB.run(/*sql*/`UPDATE Messages SET Count = Count + 1 WHERE rowid=?`, [row.id]);
+                        exists = true;
+                    }
+                });
+                if (!exists) {
+                    messageDB.run(/*sql*/`INSERT INTO Messages (Word, Count) VALUES (?, ?)`, [word, 1]);
+                }
+            });
+        }
+    });
+    //#endregion
+});
 
 client.on("message", async (message) => {
     //* sets last activity on message
@@ -816,7 +857,7 @@ async function activeUserCheck() {
 
 //* invite info channel description
 async function invitePercentageInfo() {
-    guild.roles.fetch(config.defaultrole).then(role => {hazeAmount = role.members.array().length;}).then(() => {
+    guild.roles.fetch(config.defaultrole).then(role => { hazeAmount = role.members.array().length; }).then(() => {
         guild.channels.resolve(config.invitechannel).edit({ topic: `${Math.ceil(hazeAmount * invitePercent)} votes + ❌ modifier needed for success` });
     });
 }
