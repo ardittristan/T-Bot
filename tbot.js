@@ -164,6 +164,7 @@ client.on("message", async (message) => {
                 ".eventannounce <wdhm> <message>\n -adds announcement to #announcements with provided timestamp, example: .announce 1w one week later...\n\n" +
                 ".rolewho <roleid/role number>\n -shows members that have the role\n\n" +
                 ".birthday\n -posts link to birthday list\n\n" +
+                ".messageinfo\n -shows graph with word counts\n\n" +
                 ".jumbo <emoji>\n -makes emoji big" +
                 "```"
             ).then(message =>
@@ -487,6 +488,12 @@ client.on("message", async (message) => {
             break;
         //#endregion
 
+        case "messageinfo":
+            //#region 
+            message.channel.send(new Discord.MessageEmbed().setDescription("Only updates when Ardit opens it on pc").addField(String.fromCharCode(8203), `[Message Data](${config.messageurl})`));
+            break;
+        //#endregion
+
         case "invite":
             //* creates invite vote
             //#region 
@@ -594,12 +601,12 @@ client.on("message", async (message) => {
         }
         if (!message.author.bot) {
             message.content.split(" ").forEach(word => {
-                word = word.toLowerCase()
+                word = word.toLowerCase();
                 if (!(word.includes("http://") || word.includes("https://") || word === "" || (word.startsWith("<@!") && word.endsWith(">")))) {
                     if (word.startsWith("<:") && word.endsWith(">")) {
-                        word = word.replace(/[^a-zA-Z]/g, "")
+                        word = word.replace(/[^a-zA-Z]/g, "");
                     }
-                    word = word.replace(/[^a-zA-Z0-9]/g, "")
+                    word = word.replace(/[^a-zA-Z0-9]/g, "");
                     var exists = false;
                     rows.forEach(row => {
                         if (row.Word === word) {
