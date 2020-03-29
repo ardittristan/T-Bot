@@ -594,15 +594,22 @@ client.on("message", async (message) => {
         }
         if (!message.author.bot) {
             message.content.split(" ").forEach(word => {
-                var exists = false;
-                rows.forEach(row => {
-                    if (row.Word === word) {
-                        messageDB.run(/*sql*/`UPDATE Messages SET Count = Count + 1 WHERE rowid=?`, [row.id]);
-                        exists = true;
+                word = word.toLowerCase()
+                if (!(word.includes("http://") || word.includes("https://") || word === "" || (word.startsWith("<@!") && word.endsWith(">")))) {
+                    if (word.startsWith("<:") && word.endsWith(">")) {
+                        word = word.replace(/[^a-zA-Z]/g, "")
                     }
-                });
-                if (!exists) {
-                    messageDB.run(/*sql*/`INSERT INTO Messages (Word, Count) VALUES (?, ?)`, [word, 1]);
+                    word = word.replace(/[^a-zA-Z0-9]/g, "")
+                    var exists = false;
+                    rows.forEach(row => {
+                        if (row.Word === word) {
+                            messageDB.run(/*sql*/`UPDATE Messages SET Count = Count + 1 WHERE rowid=?`, [row.id]);
+                            exists = true;
+                        }
+                    });
+                    if (!exists) {
+                        messageDB.run(/*sql*/`INSERT INTO Messages (Word, Count) VALUES (?, ?)`, [word, 1]);
+                    }
                 }
             });
         }
