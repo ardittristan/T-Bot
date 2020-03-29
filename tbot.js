@@ -11,6 +11,7 @@ const sharp = require('sharp');
 const { convertDelayStringToMS, createRichEmbed } = require("./libs/draglib");
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'], disabledEvents: ['TYPING_START'] });
 const config = require("./config.json");
+const quotes = require("./quotes.json");
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const doc = new GoogleSpreadsheet(config.spreadsheetid);
 
@@ -40,12 +41,6 @@ var bdaySheet;
 var daysSince1970Sheet;
 //* percent of server users needed for sucessful invite
 var invitePercent = 0.10;
-//* list of messages to send for birthday message
-var birthdayQuotes = [
-    "It is {name}'s birthday today! Happy {age} years!",
-    "{name} is already {age} years old! Happy birthday!",
-    "Oh god oh fuck, {name} is already {age} 🤯\n Have a great birthday!"
-];
 //* pixel size of jumbo emotes
 var jumboSize = 128;
 var hazeAmount = 0;
@@ -534,7 +529,7 @@ client.on("message", async (message) => {
                 var emojiId = message.content.match(/(?<=\<a:.*?:)([0-9]*?)(?=\>)/g);
                 if (emojiId != []) {
                     imageDownload([`https://cdn.discordapp.com/emojis/${emojiId[0]}.gif`], './tmp').then(result => {
-                        execSync(`node "${__dirname}/node_modules/gifsicle/cli.js" --resize-width ${jumboSize} --colors 256 -o ${result[0].filename} ${result[0].filename}`);
+                        execSync(`node "${__dirname}/node_modules/gifsicle/cli.js" --resize-width ${jumboSize} --colors 256 --no-warnings -o ${result[0].filename} ${result[0].filename}`);
                         var attachment = new Discord.MessageAttachment(result[0].filename, 'unknown.gif');
                         var embed = new Discord.MessageEmbed()
                             .setAuthor(message.author.username, message.author.avatarURL())
@@ -563,6 +558,12 @@ client.on("message", async (message) => {
                 }
             }
             message.delete({ timeout: 1000 });
+            break;
+        //#endregion
+
+        case "ban":
+            //#region 
+            message.channel.send(sample(quotes.banQuotes).replace("{name}", message.content.slice(pLength + 3).trim()));
             break;
         //#endregion
     }
@@ -602,9 +603,12 @@ client.on("message", async (message) => {
         if (!message.author.bot) {
             message.content.split(" ").forEach(word => {
                 word = word.toLowerCase();
-                if (!(word.includes("http://") || word.includes("https://") || word === "" || (word.startsWith("<@!") && word.endsWith(">")))) {
+                if (!(word.includes("http://") || word.includes("https://") || word === "" || (word.startsWith("<@") && word.endsWith(">")))) {
                     if (word.startsWith("<:") && word.endsWith(">")) {
                         word = word.replace(/[^a-zA-Z]/g, "");
+                    }
+                    if (word.startsWith("<a:") && word.endsWith(">")) {
+                        word = word.slice(2).replace(/[^a-zA-Z]/g, "");
                     }
                     word = word.replace(/[^a-zA-Z0-9]/g, "");
                     var exists = false;
@@ -969,7 +973,7 @@ async function checkBirthday() {
     });
     if (birthdays != []) {
         birthdays.forEach(data => {
-            guild.channels.resolve(config.announcements).send(sample(birthdayQuotes).replace("{name}", data.name).replace("{age}", data.age));
+            guild.channels.resolve(config.announcements).send(sample(quotes.birthdayQuotes).replace("{name}", data.name).replace("{age}", data.age));
         });
     }
 }
