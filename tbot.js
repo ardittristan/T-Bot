@@ -307,7 +307,7 @@ client.on("message", async (message) => {
                 var reminder = arg.substr(delayString.length).trim();
                 var author = authr.id;
                 db.run(/*sql*/`INSERT INTO Reminders VALUES (?, ?, ?)`, [delay, author, reminder]);
-                message.channel.send("You have set a reminder for: `" + delay.toISOString().replace(/T/, " ").replace(/\..+/, " GMT`"));
+                message.channel.send("You have set a reminder for: `" + delay.toISOString().replace(/T/, " ").replace(/\..+/, " British Time`"));
             }
             break;
         //#endregion
