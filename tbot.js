@@ -563,7 +563,7 @@ client.on("message", async (message) => {
 
         case "ban":
             //#region 
-            message.channel.send(sample(quotes.banQuotes).replace("{name}", message.content.slice(pLength + 3).trim()));
+            message.channel.send(sample(quotes.banQuotes).split("{name}").join(message.content.slice(pLength + 3).trim()));
             break;
         //#endregion
     }
@@ -973,7 +973,7 @@ async function checkBirthday() {
     });
     if (birthdays != []) {
         birthdays.forEach(data => {
-            guild.channels.resolve(config.announcements).send(sample(quotes.birthdayQuotes).replace("{name}", data.name).replace("{age}", data.age));
+            guild.channels.resolve(config.announcements).send(sample(quotes.birthdayQuotes).split("{name}").join(data.name).replace("{age}", data.age));
         });
     }
 }
