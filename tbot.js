@@ -4,14 +4,14 @@ const Discord = require("discord.js");
 const GetNextDate = require("get-next-date");
 const GetMidnighDate = require("get-midnight-date");
 const sample = require("lodash.sample");
-const { existsSync, mkdirSync, unlinkSync } = require("fs");
+const { existsSync, mkdirSync, unlinkSync, readFileSync } = require("fs");
 const { execSync } = require('child_process');
 const imageDownload = require('images-downloader').images;
 const sharp = require('sharp');
 const { convertDelayStringToMS, createRichEmbed } = require("./libs/draglib");
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'], disabledEvents: ['TYPING_START'] });
 const config = require("./config.json");
-const quotes = require("./quotes.json");
+var quotes = JSON.parse(readFileSync("./quotes.json", "utf8"));
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const doc = new GoogleSpreadsheet(config.spreadsheetid);
 
@@ -166,6 +166,12 @@ client.on("message", async (message) => {
                 message.delete({ timeout: 30000 })
             );
             message.delete({ timeout: 1000 });
+            break;
+        //#endregion
+
+        case "reload":
+            //#region 
+            quotes = JSON.parse(readFileSync("./quotes.json", "utf8"))
             break;
         //#endregion
 
