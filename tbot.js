@@ -29,6 +29,8 @@ const eclairImg = new Discord.MessageAttachment("https://cdn.discordapp.com/atta
 const pLength = config.prefix.length;
 /** @type {Discord.TextChannel} */
 var logChannel;
+/** @type {Discord.TextChannel} */
+var deletedChannel;
 /** @type {Discord.Guild} */
 var guild;
 var activeUsers = 1;
@@ -119,6 +121,7 @@ client.on("ready", () => {
 
     guild = client.guilds.resolve(config.guildid);
     logChannel = guild.channels.resolve(config.logchannel);
+    deletedChannel = guild.channels.resolve(config.deletelogchannel);
 
     inviteCheck();
     remindCheck();
@@ -765,6 +768,13 @@ client.on("messageReactionAdd", async (messageReaction) => {
     //#endregion
 });
 
+client.on("guildMemberRemove", async (guildMember) => {
+    logChannel.send(`${guildMember.user.username} left the server`)
+})
+
+client.on("messageDelete", async (message) => {
+    deletedChannel.send(`Channel: ${message.channel.name}\n Author: ${message.author.username}\n${message}`)
+})
 
 
 
