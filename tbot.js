@@ -536,6 +536,7 @@ client.on("message", async (message) => {
             //#region
             if (message.content.includes("<a:")) {
                 var emojiId = message.content.match(/(?<=\<a:.*?:)([0-9]*?)(?=\>)/g);
+                if (emojiId === null) { console.error(message.content); return; }
                 if (emojiId != []) {
                     imageDownload([`https://cdn.discordapp.com/emojis/${emojiId[0]}.gif`], './tmp').then(result => {
                         execSync(`node "${__dirname}/node_modules/gifsicle/cli.js" --resize-width ${jumboSize} --colors 256 --no-warnings -o ${result[0].filename} ${result[0].filename}`);
@@ -551,6 +552,7 @@ client.on("message", async (message) => {
                 }
             } else {
                 var emojiId = message.content.match(/(?<=\<:.*?:)([0-9]*?)(?=\>)/g);
+                if (emojiId === null) { console.error(message.content); return; }
                 if (emojiId != []) {
                     imageDownload([`https://cdn.discordapp.com/emojis/${emojiId[0]}.png`], './tmp').then(async result => {
                         sharp(result[0].filename).resize(jumboSize).toBuffer().then(image => {
@@ -776,9 +778,9 @@ client.on("messageDelete", async (message) => {
     if (message.content.startsWith(".")) { return; }
     if (!message.author.bot) {
         if (message.attachments.array().length !== 0) {
-            deletedChannel.send(`Channel: ${message.channel.name}\n Author: ${message.author.username}\n${message}\n**Contains Image**`, {disableMentions: "all"});
+            deletedChannel.send(`Channel: ${message.channel.name}\n Author: ${message.author.username}\n${message}\n**Contains Image**`, { disableMentions: "all" });
         } else {
-            deletedChannel.send(`Channel: ${message.channel.name}\n Author: ${message.author.username}\n${message}`, {disableMentions: "all"});
+            deletedChannel.send(`Channel: ${message.channel.name}\n Author: ${message.author.username}\n${message}`, { disableMentions: "all" });
         }
     }
 });
@@ -1012,6 +1014,12 @@ async function dbVacuum() {
 dbVacuum;
 setInterval(dbVacuum, 86400000);
 
+
+
+
+process.on('unhandledRejection', err => {
+
+});
 
 
 
