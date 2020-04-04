@@ -8,6 +8,9 @@ const { existsSync, mkdirSync, unlinkSync, readFileSync } = require("fs");
 const { execSync } = require('child_process');
 const imageDownload = require('images-downloader').images;
 const sharp = require('sharp');
+const emojiExists = require('emoji-exists');
+const twemojiParse = require('twemoji-parser').parse;
+const svg2img = require('svg2img');
 const { convertDelayStringToMS, createRichEmbed } = require("./libs/draglib");
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'], disabledEvents: ['TYPING_START'] });
 const config = require("./config.json");
@@ -534,38 +537,49 @@ client.on("message", async (message) => {
         case "jumbo":
             //* big emotes
             //#region
-            if (message.content.includes("<a:")) {
-                var emojiId = message.content.match(/(?<=\<a:.*?:)([0-9]*?)(?=\>)/g);
-                if (emojiId != [] && emojiId != null) {
-                    imageDownload([`https://cdn.discordapp.com/emojis/${emojiId[0]}.gif`], './tmp').then(result => {
-                        execSync(`node "${__dirname}/node_modules/gifsicle/cli.js" --resize-width ${jumboSize} --colors 256 --no-warnings -o ${result[0].filename} ${result[0].filename}`);
-                        var attachment = new Discord.MessageAttachment(result[0].filename, 'unknown.gif');
-                        var embed = new Discord.MessageEmbed()
-                            .setAuthor(message.author.username, message.author.avatarURL())
-                            .attachFiles(attachment)
-                            .setImage('attachment://unknown.gif');
-                        message.channel.send(embed).then(() => {
-                            unlinkSync(result[0].filename);
-                        });
-                    });
-                }
-            } else {
-                var emojiId = message.content.match(/(?<=\<:.*?:)([0-9]*?)(?=\>)/g);
-                if (emojiId != [] && emojiId != null) {
-                    imageDownload([`https://cdn.discordapp.com/emojis/${emojiId[0]}.png`], './tmp').then(async result => {
-                        sharp(result[0].filename).resize(jumboSize).toBuffer().then(image => {
-                            var attachment = new Discord.MessageAttachment(image, 'unknown.png');
+            var emojiId = message.content.slice(pLength + 5).trim();
+            if (emojiExists(emojiId)) {
+                svg2img(twemojiParse(emojiId)[0].url, { width: jumboSize, height: jumboSize, preserveAspectRatio:true }, function (_, buffer) {
+                    var attachment = new Discord.MessageAttachment(buffer, "unknown.png");
+                    var embed = new Discord.MessageEmbed()
+                                .setAuthor(message.author.username, message.author.avatarURL())
+                                .attachFiles(attachment)
+                                .setImage('attachment://unknown.png')
+                    message.channel.send(embed)
+                });
+            } else
+                if (message.content.includes("<a:")) {
+                    var emojiId = message.content.match(/(?<=\<a:.*?:)([0-9]*?)(?=\>)/g);
+                    if (emojiId != [] && emojiId != null) {
+                        imageDownload([`https://cdn.discordapp.com/emojis/${emojiId[0]}.gif`], './tmp').then(result => {
+                            execSync(`node "${__dirname}/node_modules/gifsicle/cli.js" --resize-width ${jumboSize} --colors 256 --no-warnings -o ${result[0].filename} ${result[0].filename}`);
+                            var attachment = new Discord.MessageAttachment(result[0].filename, 'unknown.gif');
                             var embed = new Discord.MessageEmbed()
                                 .setAuthor(message.author.username, message.author.avatarURL())
                                 .attachFiles(attachment)
-                                .setImage('attachment://unknown.png');
+                                .setImage('attachment://unknown.gif');
                             message.channel.send(embed).then(() => {
                                 unlinkSync(result[0].filename);
                             });
                         });
-                    });
+                    }
+                } else {
+                    var emojiId = message.content.match(/(?<=\<:.*?:)([0-9]*?)(?=\>)/g);
+                    if (emojiId != [] && emojiId != null) {
+                        imageDownload([`https://cdn.discordapp.com/emojis/${emojiId[0]}.png`], './tmp').then(async result => {
+                            sharp(result[0].filename).resize(jumboSize).toBuffer().then(image => {
+                                var attachment = new Discord.MessageAttachment(image, 'unknown.png');
+                                var embed = new Discord.MessageEmbed()
+                                    .setAuthor(message.author.username, message.author.avatarURL())
+                                    .attachFiles(attachment)
+                                    .setImage('attachment://unknown.png');
+                                message.channel.send(embed).then(() => {
+                                    unlinkSync(result[0].filename);
+                                });
+                            });
+                        });
+                    }
                 }
-            }
             message.delete({ timeout: 1000 });
             break;
         //#endregion
