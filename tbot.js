@@ -174,7 +174,7 @@ client.on("message", async (message) => {
 
         case "reload":
             //#region 
-            quotes = JSON.parse(readFileSync("./quotes.json", "utf8"))
+            quotes = JSON.parse(readFileSync("./quotes.json", "utf8"));
             break;
         //#endregion
 
@@ -769,12 +769,19 @@ client.on("messageReactionAdd", async (messageReaction) => {
 });
 
 client.on("guildMemberRemove", async (guildMember) => {
-    logChannel.send(`${guildMember.user.username} left the server`)
-})
+    logChannel.send(`${guildMember.user.username} left the server`);
+});
 
 client.on("messageDelete", async (message) => {
-    deletedChannel.send(`Channel: ${message.channel.name}\n Author: ${message.author.username}\n${message}`)
-})
+    if (message.content.startsWith(".")) { return; }
+    if (!message.author.bot) {
+        if (message.attachments.array().length !== 0) {
+            deletedChannel.send(`Channel: ${message.channel.name}\n Author: ${message.author.username}\n${message}\n**Contains Image**`, {disableMentions: "all"});
+        } else {
+            deletedChannel.send(`Channel: ${message.channel.name}\n Author: ${message.author.username}\n${message}`, {disableMentions: "all"});
+        }
+    }
+});
 
 
 
