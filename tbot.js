@@ -536,8 +536,7 @@ client.on("message", async (message) => {
             //#region
             if (message.content.includes("<a:")) {
                 var emojiId = message.content.match(/(?<=\<a:.*?:)([0-9]*?)(?=\>)/g);
-                if (emojiId === null) { console.error(message.content); return; }
-                if (emojiId != []) {
+                if (emojiId != [] && emojiId != null) {
                     imageDownload([`https://cdn.discordapp.com/emojis/${emojiId[0]}.gif`], './tmp').then(result => {
                         execSync(`node "${__dirname}/node_modules/gifsicle/cli.js" --resize-width ${jumboSize} --colors 256 --no-warnings -o ${result[0].filename} ${result[0].filename}`);
                         var attachment = new Discord.MessageAttachment(result[0].filename, 'unknown.gif');
@@ -552,8 +551,7 @@ client.on("message", async (message) => {
                 }
             } else {
                 var emojiId = message.content.match(/(?<=\<:.*?:)([0-9]*?)(?=\>)/g);
-                if (emojiId === null) { console.error(message.content); return; }
-                if (emojiId != []) {
+                if (emojiId != [] && emojiId != null) {
                     imageDownload([`https://cdn.discordapp.com/emojis/${emojiId[0]}.png`], './tmp').then(async result => {
                         sharp(result[0].filename).resize(jumboSize).toBuffer().then(image => {
                             var attachment = new Discord.MessageAttachment(image, 'unknown.png');
