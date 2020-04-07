@@ -309,6 +309,9 @@ client.on("message", async (message) => {
             break;
         //#endregion
 
+        case "remindme":
+        case "reminder":
+        case "rem":
         case "remind":
             //* reminder tool
             //#region
@@ -1010,7 +1013,7 @@ async function checkBirthday() {
     });
     if (birthdays != []) {
         birthdays.forEach(data => {
-            guild.channels.resolve(config.announcements).send(sample(quotes.birthdayQuotes).split("{name}").join(data.name).replace("{age}", data.age));
+            guild.channels.resolve(config.announcements).send(sample(quotes.birthdayQuotes).split("{name}").join(data.name).replace("{age}", data.age) + `\n<@${config.birthdayrole}>`);
         });
     }
 }
@@ -1030,7 +1033,8 @@ setInterval(dbVacuum, 86400000);
 
 
 process.on('unhandledRejection', err => {
-
+    console.error(err);
+    logChannel.send(`**ERROR**\n\`\`\`${err}\`\`\``)
 });
 
 
