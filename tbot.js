@@ -612,11 +612,24 @@ client.on("emojiCreate", async (emoji) => {
 
 client.on("guildMemberUpdate", async (_old, member) => {
     //* checks if user gives themselve the campaign role when they're not allowed to
+    //#region 
     if (member.roles.cache.get(config.campaignrole)) {
         if (!await campaignRole(member)) {
             member.roles.remove(config.campaignrole);
         }
     };
+    //#endregion
+
+    //* checks if user is supposed to have voice role
+    //#region 
+    if (member.voice.channel == undefined) {
+        config.voiceroles.forEach(array => {
+            if (member.roles.cache.get(array[1])) {
+                member.roles.remove(array[1]);
+            }
+        });
+    }
+    //#endregion
 });
 
 client.on("message", async (message) => {
@@ -807,6 +820,7 @@ client.on("messageDelete", async (message) => {
 
 client.on("voiceStateUpdate", (oldState, newState) => {
     //* channel ping roles
+    //#region 
     if (oldState.channel != undefined) {
         if (oldState.channel.parentID === config.vccategory) {
             config.voiceroles.forEach(array => {
@@ -825,6 +839,7 @@ client.on("voiceStateUpdate", (oldState, newState) => {
             });
         }
     }
+    //#endregion
 });
 
 
