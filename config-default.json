@@ -23,5 +23,11 @@
     "clipchannel": "",
     "messageurl": "",
     "deletelogchannel": "",
-    "birthdayrole": ""
+    "birthdayrole": "",
+    "voiceroles": [
+        [
+            "channelid",
+            "roleid"
+        ]
+    ]
 }

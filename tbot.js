@@ -19,7 +19,7 @@ const { GoogleSpreadsheet } = require("google-spreadsheet");
 const doc = new GoogleSpreadsheet(config.spreadsheetid);
 
 //* Attachments
-const hazeImg = new Discord.MessageAttachment("https://i.imgur.com/DzzIppd.png", "Haze.png");
+const hazeImg = new Discord.MessageAttachment("https://i.imgur.com/ahU3Ke0.png", "Haze.png");
 const bulliImg = new Discord.MessageAttachment("https://cdn.discordapp.com/attachments/659472253913661458/665701475426631698/unknown.png", "StopBulli.png");
 const eclairImg = new Discord.MessageAttachment("https://cdn.discordapp.com/attachments/656761226004791298/669289619258605578/eclair.png", "Eclair.png");
 
@@ -187,6 +187,11 @@ client.on("message", async (message) => {
             if (message.channel.id === config.vctalk && message.member.voice.channel != undefined) {
                 if (message.member.voice.channel.parentID === config.vccategory) {
                     message.member.voice.channel.setName(message.content.slice(pLength + 6).trim());
+                    config.voiceroles.forEach(array => {
+                        if (array[0] == message.member.voice.channelID) {
+                            guild.roles.fetch(array[1]).then(role => { role.edit({ name: message.content.slice(pLength + 6).trim() }); });
+                        }
+                    });
                     logChannel.send(`${authr}` + " set voice channel name to: `" + message.content.slice(pLength + 6).trim() + "`");
                 }
             }
@@ -542,13 +547,13 @@ client.on("message", async (message) => {
             //#region
             var emojiId = message.content.slice(pLength + 5).trim();
             if (emojiExists(emojiId)) {
-                svg2img(twemojiParse(emojiId)[0].url, { width: jumboSize, height: jumboSize, preserveAspectRatio:true }, function (_, buffer) {
+                svg2img(twemojiParse(emojiId)[0].url, { width: jumboSize, height: jumboSize, preserveAspectRatio: true }, function (_, buffer) {
                     var attachment = new Discord.MessageAttachment(buffer, "unknown.png");
                     var embed = new Discord.MessageEmbed()
-                                .setAuthor(message.author.username, message.author.avatarURL())
-                                .attachFiles(attachment)
-                                .setImage('attachment://unknown.png')
-                    message.channel.send(embed)
+                        .setAuthor(message.author.username, message.author.avatarURL())
+                        .attachFiles(attachment)
+                        .setImage('attachment://unknown.png');
+                    message.channel.send(embed);
                 });
             } else
                 if (message.content.includes("<a:")) {
@@ -800,6 +805,27 @@ client.on("messageDelete", async (message) => {
     }
 });
 
+client.on("voiceStateUpdate", (oldState, newState) => {
+    //* channel ping roles
+    if (oldState.channel != undefined) {
+        if (oldState.channel.parentID === config.vccategory) {
+            config.voiceroles.forEach(array => {
+                if (array[0] == oldState.channelID) {
+                    oldState.member.roles.remove(array[1]);
+                }
+            });
+        }
+    }
+    if (newState.channel != undefined) {
+        if (newState.channel.parentID === config.vccategory) {
+            config.voiceroles.forEach(array => {
+                if (array[0] == newState.channelID) {
+                    newState.member.roles.add(array[1]);
+                }
+            });
+        }
+    }
+});
 
 
 //! Functions
@@ -1034,7 +1060,7 @@ setInterval(dbVacuum, 86400000);
 
 process.on('unhandledRejection', err => {
     console.error(err);
-    logChannel.send(`**ERROR**\n\`\`\`${err}\`\`\``)
+    logChannel.send(`**ERROR**\n\`\`\`${err}\`\`\``);
 });
 
 
