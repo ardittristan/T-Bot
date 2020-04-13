@@ -987,7 +987,7 @@ async function sheetSetup() {
                 .then(async function () {
                     bdaySheet = doc.sheetsByIndex[0];
                     daysSince1970Sheet = doc.sheetsByIndex[1];
-                    var timeout = GetNextDate(new Date(Date.now() - 3600000)).getTime() - (Date.now() - 3600000);
+                    var timeout = GetNextDate(new Date(Date.now())).getTime() - (Date.now());
                     setTimeout(function () {
                         checkBirthday();
                         setInterval(checkBirthday, 86400000);
@@ -1001,8 +1001,8 @@ async function checkBirthday() {
     var rows = await bdaySheet.getRows();
     var birthdayTimestamp = await daysSince1970Sheet.getRows();
     var curTime = new Date(Date.now());
-    var curDay = curTime.getUTCDate();
-    var curMonth = curTime.getUTCMonth();
+    var curDay = curTime.getDate();
+    var curMonth = curTime.getMonth();
     var birthdays = [];
     rows.forEach(function (row, id) {
         var day = birthdayTimestamp[id].day;
@@ -1013,7 +1013,7 @@ async function checkBirthday() {
     });
     if (birthdays != []) {
         birthdays.forEach(data => {
-            guild.channels.resolve(config.announcements).send(sample(quotes.birthdayQuotes).split("{name}").join(data.name).replace("{age}", data.age) + `\n<@${config.birthdayrole}>`);
+            guild.channels.resolve(config.announcements).send(sample(quotes.birthdayQuotes).split("{name}").join(data.name).replace("{age}", data.age) + `\n<@&${config.birthdayrole}>`);
         });
     }
 }
