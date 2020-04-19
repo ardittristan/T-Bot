@@ -1028,7 +1028,10 @@ async function sheetSetup() {
                 .then(async function () {
                     bdaySheet = doc.sheetsByIndex[0];
                     daysSince1970Sheet = doc.sheetsByIndex[1];
-                    var timeout = GetNextDate(new Date(Date.now())).getTime() - (Date.now());
+                    var timeout = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 2, 0, 0, 0) - now;
+                    if (timeout < 0) {
+                        timeout += 86400000;
+                    }
                     setTimeout(function () {
                         checkBirthday();
                         setInterval(checkBirthday, 86400000);
