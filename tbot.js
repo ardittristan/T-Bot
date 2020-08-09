@@ -45,10 +45,10 @@ var starActive = false;
 var bdaySheet;
 var daysSince1970Sheet;
 //* percent of server users needed for sucessful invite
-var invitePercent = 0.10;
+// var invitePercent = 0.10;
 //* pixel size of jumbo emotes
 var jumboSize = 128;
-var hazeAmount = 0;
+// var hazeAmount = 0;
 
 
 
@@ -130,7 +130,7 @@ client.on("ready", () => {
     remindCheck();
     activeUserCheck();
     setStatus(undefined, undefined, true);
-    invitePercentageInfo();
+    // invitePercentageInfo();
     console.log("Booted");
 });
 
@@ -210,7 +210,7 @@ client.on("message", async (message) => {
             break;
         //#endregion
 
-        case "guestinvite":
+        case "invite":
             //* create invite link
             //#region
             if (message.channel.id === config.invitechannel) {
@@ -218,7 +218,7 @@ client.on("message", async (message) => {
                 message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true, temporary: true }).then(invite =>
                     message.author.send(invite.url)
                 );
-                logChannel.send(`${authr}` + " made a guest invite");
+                logChannel.send(`${authr}` + " made an invite");
             }
             break;
         //#endregion
@@ -320,7 +320,7 @@ client.on("message", async (message) => {
         case "remind":
             //* reminder tool
             //#region
-            var arg = message.content.slice(pLength + 6).trim();
+            var arg = message.content.substr(message.content.indexOf(' ') + 1).trim();
             var delayString = arg.substr(0, arg.indexOf(" "));
             var delay = new Date(Date.now() + convertDelayStringToMS(delayString));
             if (delay) {
@@ -509,30 +509,32 @@ client.on("message", async (message) => {
             break;
         //#endregion
 
-        case "invite":
-            //* creates invite vote
+        // case "invite":
+        //     //* creates invite vote
+        //#region 
             //#region 
-            var arg = message.content.slice(pLength + 6).trim();
-            if (arg != "") {
-                await message.react('✅');
-                await message.react('❌');
-                setTimeout(function () {
-                    if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 2) >= Math.ceil(guild.memberCount * invitePercent)) {
-                        message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
-                            message.author.send(invite.url);
-                            message.author.send(message);
-                        });
-                        message.delete({ timeout: 1000 });
-                        message.channel.send(`${arg}'s invite has gone trough`);
-                    }
-                }, 86400000);
-            } else {
-                message.channel.send("Please say who you want to invite").then(botMessage => {
-                    botMessage.delete({ timeout: 10000 });
-                });
-                message.delete({ timeout: 1000 });
-            }
-            break;
+        //#region 
+        //     var arg = message.content.slice(pLength + 6).trim();
+        //     if (arg != "") {
+        //         await message.react('✅');
+        //         await message.react('❌');
+        //         setTimeout(function () {
+        //             if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 2) >= Math.ceil(guild.memberCount * invitePercent)) {
+        //                 message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
+        //                     message.author.send(invite.url);
+        //                     message.author.send(message);
+        //                 });
+        //                 message.delete({ timeout: 1000 });
+        //                 message.channel.send(`${arg}'s invite has gone trough`);
+        //             }
+        //         }, 86400000);
+        //     } else {
+        //         message.channel.send("Please say who you want to invite").then(botMessage => {
+        //             botMessage.delete({ timeout: 10000 });
+        //         });
+        //         message.delete({ timeout: 1000 });
+        //     }
+        //     break;
         //#endregion
 
         case "haze2":
@@ -710,50 +712,52 @@ client.on("message", async (message) => {
     //#endregion
 });
 
-client.on("messageReactionAdd", async (messageReaction) => {
-    //* Invite
+// client.on("messageReactionAdd", async (messageReaction) => {
+//     //* Invite
+//#region 
     //#region 
-    if (messageReaction.partial) {
-        try {
-            await messageReaction.fetch().then(async function () {
-                await messageReaction.message.fetch().then(async function () {
-                    if (messageReaction.emoji.name === "✅" && guild.id === messageReaction.message.guild.id && messageReaction.message.content.startsWith(".invite") && messageReaction.message.channel.id === config.invitechannel) {
-                        if (messageReaction.message.reactions.resolve("❌") != null) {
-                            if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 1.5) >= Math.ceil(hazeAmount * invitePercent)) {
-                                if (messageReaction.message.createdTimestamp + 86400000 < Date.now()) {
-                                    messageReaction.message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
-                                        messageReaction.message.author.send(invite.url);
-                                        messageReaction.message.author.send(messageReaction.message);
-                                    });
-                                    messageReaction.message.delete({ timeout: 1000 });
-                                    messageReaction.message.channel.send(`${messageReaction.message.content.slice(pLength + 6).trim()}'s invite has gone through`);
-                                }
-                            }
-                        }
-                    }
-                });
-            });
-        } catch (error) {
-            console.log("Something went wrong when fetching the reaction: ", error);
-        }
-    } else {
-        if (messageReaction.emoji.name === "✅" && guild.id === messageReaction.message.guild.id && messageReaction.message.content.startsWith(".invite") && messageReaction.message.channel.id === config.invitechannel) {
-            if (messageReaction.message.reactions.resolve("❌") != null) {
-                if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 1.5) >= Math.ceil(hazeAmount * invitePercent)) {
-                    if (messageReaction.message.createdTimestamp + 86400000 < Date.now()) {
-                        messageReaction.message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
-                            messageReaction.message.author.send(invite.url);
-                            messageReaction.message.author.send(messageReaction.message);
-                        });
-                        messageReaction.message.delete({ timeout: 1000 });
-                        messageReaction.message.channel.send(`${messageReaction.message.content.slice(pLength + 6).trim()}'s invite has gone through`);
-                    }
-                }
-            }
-        }
-    }
-    //#endregion
-});
+//#region 
+//     if (messageReaction.partial) {
+//         try {
+//             await messageReaction.fetch().then(async function () {
+//                 await messageReaction.message.fetch().then(async function () {
+//                     if (messageReaction.emoji.name === "✅" && guild.id === messageReaction.message.guild.id && messageReaction.message.content.startsWith(".invite") && messageReaction.message.channel.id === config.invitechannel) {
+//                         if (messageReaction.message.reactions.resolve("❌") != null) {
+//                             if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 1.5) >= Math.ceil(hazeAmount * invitePercent)) {
+//                                 if (messageReaction.message.createdTimestamp + 86400000 < Date.now()) {
+//                                     messageReaction.message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
+//                                         messageReaction.message.author.send(invite.url);
+//                                         messageReaction.message.author.send(messageReaction.message);
+//                                     });
+//                                     messageReaction.message.delete({ timeout: 1000 });
+//                                     messageReaction.message.channel.send(`${messageReaction.message.content.slice(pLength + 6).trim()}'s invite has gone through`);
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 });
+//             });
+//         } catch (error) {
+//             console.log("Something went wrong when fetching the reaction: ", error);
+//         }
+//     } else {
+//         if (messageReaction.emoji.name === "✅" && guild.id === messageReaction.message.guild.id && messageReaction.message.content.startsWith(".invite") && messageReaction.message.channel.id === config.invitechannel) {
+//             if (messageReaction.message.reactions.resolve("❌") != null) {
+//                 if ((messageReaction.count - 1) - ((messageReaction.message.reactions.resolve("❌").count - 1) * 1.5) >= Math.ceil(hazeAmount * invitePercent)) {
+//                     if (messageReaction.message.createdTimestamp + 86400000 < Date.now()) {
+//                         messageReaction.message.channel.createInvite({ maxAge: 0, maxUses: 1, unique: true }).then(invite => {
+//                             messageReaction.message.author.send(invite.url);
+//                             messageReaction.message.author.send(messageReaction.message);
+//                         });
+//                         messageReaction.message.delete({ timeout: 1000 });
+//                         messageReaction.message.channel.send(`${messageReaction.message.content.slice(pLength + 6).trim()}'s invite has gone through`);
+//                     }
+//                 }
+//             }
+//         }
+//     }
+//#endregion
+// });
 
 client.on("messageReactionAdd", async (messageReaction) => {
     //* Starboard
@@ -765,40 +769,32 @@ client.on("messageReactionAdd", async (messageReaction) => {
         }
     }
     starActive = true;
+
     if (messageReaction.partial) {
-        try {
-            await messageReaction.fetch().then(async function () {
-                await messageReaction.message.fetch().then(async function () {
-                    if (messageReaction.emoji.name === "⭐" && guild.id === messageReaction.message.guild.id) {
-                        var exists = false;
-                        db.all(/*sql*/`SELECT MessageId FROM "Starred" WHERE MessageId = ? LIMIT 1`, [messageReaction.message.id], async function (err, rows) {
-                            if (rows.length === 1) { exists = true; }
-                            if (messageReaction.count >= Math.ceil(activeUsers * starDevider) + 1 && !exists) {
-                                guild.channels.resolve(config.starboard).send(await createRichEmbed(await messageReaction.message), { disableEveryone: true });
-                                db.run(/*sql*/`INSERT INTO Starred VALUES (?)`, [messageReaction.message.id]);
-                                starActive = false;
-                            }
-                        });
-                    }
-                });
+        await messageReaction.message.fetch();
+    }
+
+    if (messageReaction.emoji.name !== "⭐" || guild.id !== messageReaction.message.guild.id) {
+        // Wrong emoji or wrong server, bail
+        return;
+    }
+
+    db.all(/*sql*/`SELECT MessageId FROM "Starred" WHERE MessageId = ? LIMIT 1`, [messageReaction.message.id], async function (err, rows) {
+        if (rows.length === 1) {
+            // Message is already starboarded, don't starboard it again
+            return;
+        }
+
+        if (messageReaction.count >= Math.ceil(activeUsers * starDevider) + 1) {
+            guild.channels.resolve(config.starboard).send({
+                embed: await createRichEmbed(await messageReaction.message),
+                disableEveryone: true,
             });
-        } catch (error) {
-            console.log("Something went wrong when fetching the reaction: ", error);
+            db.run(/*sql*/`INSERT INTO Starred VALUES (?)`, [messageReaction.message.id]);
             starActive = false;
         }
-    } else {
-        if (messageReaction.emoji.name === "⭐" && guild.id === messageReaction.message.guild.id) {
-            var exists = false;
-            db.all(/*sql*/`SELECT MessageId FROM "Starred" WHERE MessageId = ? LIMIT 1`, [messageReaction.message.id], async function (err, rows) {
-                if (rows.length === 1) { exists = true; }
-                if (messageReaction.count >= Math.ceil(activeUsers * starDevider) + 1 && !exists) {
-                    guild.channels.resolve(config.starboard).send(await createRichEmbed(await messageReaction.message, { disableEveryone: true }));
-                    db.run(/*sql*/`INSERT INTO Starred VALUES (?)`, [messageReaction.message.id]);
-                    starActive = false;
-                }
-            });
-        }
-    }
+    });
+
     starActive = false;
     //#endregion
 });
@@ -808,6 +804,7 @@ client.on("guildMemberRemove", async (guildMember) => {
 });
 
 client.on("messageDelete", async (message) => {
+    if (message.content === undefined);
     if (message.content.startsWith(".")) { return; }
     if (!message.author.bot) {
         if (message.attachments.array().length !== 0) {
@@ -954,12 +951,12 @@ async function activeUserCheck() {
     });
 }
 
-//* invite info channel description
-async function invitePercentageInfo() {
-    guild.roles.fetch(config.defaultrole).then(role => { hazeAmount = role.members.array().length; }).then(() => {
-        guild.channels.resolve(config.invitechannel).edit({ topic: `${Math.ceil(hazeAmount * invitePercent)} votes + ❌ modifier needed for success` });
-    });
-}
+// //* invite info channel description
+// async function invitePercentageInfo() {
+//     guild.roles.fetch(config.defaultrole).then(role => { hazeAmount = role.members.array().length; }).then(() => {
+//         guild.channels.resolve(config.invitechannel).edit({ topic: `${Math.ceil(hazeAmount * invitePercent)} votes + ❌ modifier needed for success` });
+//     });
+// }
 
 //* status set
 async function setStatus(type, message, startup = false) {
@@ -1029,7 +1026,7 @@ async function sheetSetup() {
                     bdaySheet = doc.sheetsByIndex[0];
                     daysSince1970Sheet = doc.sheetsByIndex[1];
                     var now = new Date();
-                    var timeout = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 2, 0, 0, 0) - now;
+                    var timeout = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 1, 0, 0, 0) - now;
                     if (timeout < 0) {
                         timeout += 86400000;
                     }
@@ -1088,7 +1085,7 @@ process.on('unhandledRejection', err => {
 
 //! Intervals
 setInterval(inviteCheck, 3600000);
-setInterval(invitePercentageInfo, 3600000);
+// setInterval(invitePercentageInfo, 3600000);
 setInterval(remindCheck, 60000);
 setInterval(activeUserCheck, 600000);
 sheetSetup();
