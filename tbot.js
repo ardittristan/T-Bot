@@ -1,21 +1,25 @@
 //! Imports
-const { Database, OPEN_READWRITE, OPEN_CREATE } = require("sqlite3");
-const Discord = require("discord.js");
-const GetNextDate = require("get-next-date");
-const GetMidnighDate = require("get-midnight-date");
-const sample = require("lodash.sample");
-const { existsSync, mkdirSync, unlinkSync, readFileSync } = require("fs");
-const { execSync } = require('child_process');
-const imageDownload = require('images-downloader').images;
-const sharp = require('sharp');
-const emojiExists = require('emoji-exists');
-const twemojiParse = require('twemoji-parser').parse;
-const svg2img = require('svg2img');
-const { convertDelayStringToMS, createRichEmbed } = require("./libs/draglib");
+import sqlite3 from "sqlite3";
+const { Database, OPEN_READWRITE, OPEN_CREATE } = sqlite3;
+import Discord from "discord.js";
+import GetNextDate from "get-next-date";
+import GetMidnighDate from "get-midnight-date";
+import sample from "lodash.sample";
+import { existsSync, mkdirSync, unlinkSync, readFileSync } from "fs";
+import { execSync } from "child_process";
+import imagesDownloader from "images-downloader";
+const imageDownload = imagesDownloader.images;
+import sharp from "sharp";
+import emojiExists from "emoji-exists";
+import twemojiParser from "twemoji-parser";
+const twemojiParse = twemojiParser.parse;
+import svg2img from "svg2img";
+import { convertDelayStringToMS, createRichEmbed } from "./libs/draglib.js";
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'], disabledEvents: ['TYPING_START'] });
-const config = require("./config.json");
+const config = JSON.parse(readFileSync("./config.json", "utf-8"));
 var quotes = JSON.parse(readFileSync("./quotes.json", "utf8"));
-const { GoogleSpreadsheet } = require("google-spreadsheet");
+import googleSpreadsheet from "google-spreadsheet";
+const { GoogleSpreadsheet } = googleSpreadsheet;
 const doc = new GoogleSpreadsheet(config.spreadsheetid);
 
 //* Attachments
@@ -176,7 +180,7 @@ client.on("message", async (message) => {
         //#endregion
 
         case "reload":
-            //#region 
+            //#region
             quotes = JSON.parse(readFileSync("./quotes.json", "utf8"));
             break;
         //#endregion
@@ -461,7 +465,7 @@ client.on("message", async (message) => {
         //#endregion
 
         case "rolewho":
-            //#region 
+            //#region
             /** @type {string} */
             var roleId;
             var arg = message.content.slice(pLength + 7).trim();
@@ -497,23 +501,23 @@ client.on("message", async (message) => {
         //#endregion
 
         case "birthday":
-            //#region 
+            //#region
             message.channel.send(new Discord.MessageEmbed().addField(String.fromCharCode(8203), `[Birthday List](${config.birthdayurl})`));
             message.delete({ timeout: 1000 });
             break;
         //#endregion
 
         case "messageinfo":
-            //#region 
+            //#region
             message.channel.send(new Discord.MessageEmbed().setDescription("Only updates when Ardit opens it on pc").addField(String.fromCharCode(8203), `[Message Data](${config.messageurl})`));
             break;
         //#endregion
 
         // case "invite":
         //     //* creates invite vote
-        //#region 
-            //#region 
-        //#region 
+        //#region
+            //#region
+        //#region
         //     var arg = message.content.slice(pLength + 6).trim();
         //     if (arg != "") {
         //         await message.react('✅');
@@ -539,7 +543,7 @@ client.on("message", async (message) => {
 
         case "haze2":
             //* copypasta
-            //#region 
+            //#region
             message.channel.send(`I've come to make an announcement: HaZe clan are bitch-ass motherfuckers. They pissed on my fucking wife. That's right, they took their little, tiny dicks out and they pissed on my fucking wife and they said their dicks were ***this big*** and I said "that's disgusting!" so I'm making a callout post on my twitter dot com: HaZe clan, you got small dicks. They're the size of Poxy except WAY smaller. And guess what? HERE'S WHAT MY DICK LOOK LIKE ***PFFFFFFFFGJT*** That's right, baby, all point, no quills, no pillows- look at that it looks like two balls and a bong. You fucked my wife so guess what? I'M GONNA FUCK THE EARTH. THAT'S RIGHT, THIS IS WHAT YOU GET, ***MY SUPER LASER PISS!*** Except I'm not gonna piss on the Earth, I'm gonna go HIGHER. I'm pissing on THE MOOOOON! HOW DO YOU LIKE THAT OBAMA? I PISSED ON THE MOON YOU IDIOT! You have twenty three hours before the PISS DRRRRRROPLLLLLETS HIT THE FUCKING EARTH! Now get out of my fucking sight before I piss on you too!`);
             break;
         //#endregion
@@ -595,7 +599,7 @@ client.on("message", async (message) => {
         //#endregion
 
         case "ban":
-            //#region 
+            //#region
             message.channel.send(sample(quotes.banQuotes).split("{name}").join(message.content.slice(pLength + 3).trim()));
             break;
         //#endregion
@@ -614,7 +618,7 @@ client.on("emojiCreate", async (emoji) => {
 
 client.on("guildMemberUpdate", async (_old, member) => {
     //* checks if user gives themselve the campaign role when they're not allowed to
-    //#region 
+    //#region
     if (member.roles.cache.get(config.campaignrole)) {
         if (!await campaignRole(member)) {
             member.roles.remove(config.campaignrole);
@@ -623,7 +627,7 @@ client.on("guildMemberUpdate", async (_old, member) => {
     //#endregion
 
     //* checks if user is supposed to have voice role
-    //#region 
+    //#region
     if (member.voice.channel == undefined) {
         config.voiceroles.forEach(array => {
             if (member.roles.cache.get(array[1])) {
@@ -636,7 +640,7 @@ client.on("guildMemberUpdate", async (_old, member) => {
 
 client.on("message", async (message) => {
     //* adds word to list/adds count
-    //#region 
+    //#region
     let sql = /*sql*/`SELECT    Word,
                                 Count,
                                 _rowid_ id
@@ -702,7 +706,7 @@ client.on("message", async (message) => {
     //#endregion
 
     //* checks if game clip is an actual clip
-    //#region 
+    //#region
     if (message.channel == config.clipchannel) {
         if (!(message.content.includes("https://") || message.content.includes("http://") || message.attachments.array().length != 0)) {
             message.delete();
@@ -714,9 +718,9 @@ client.on("message", async (message) => {
 
 // client.on("messageReactionAdd", async (messageReaction) => {
 //     //* Invite
-//#region 
-    //#region 
-//#region 
+//#region
+    //#region
+//#region
 //     if (messageReaction.partial) {
 //         try {
 //             await messageReaction.fetch().then(async function () {
@@ -786,9 +790,20 @@ client.on("messageReactionAdd", async (messageReaction) => {
         }
 
         if (messageReaction.count >= Math.ceil(activeUsers * starDevider) + 1) {
-            guild.channels.resolve(config.starboard).send({
-                embed: await createRichEmbed(await messageReaction.message),
-                disableEveryone: true,
+            var reactionMessage = await messageReaction.message.fetch();
+
+            if (reactionMessage.reference && reactionMessage.reference.messageID) {
+                /** @type { Discord.TextChannel } */
+                var referencedChannel = await guild.channels.resolve(reactionMessage.reference.channelID).fetch();
+                var referencedMessage = await referencedChannel.messages.resolve(reactionMessage.reference.messageID).fetch();
+                var parsedMessage = `<@!${referencedMessage.author.id}>\n> ${referencedMessage.content.replace(/\n(?!$)/g, "\n> ")}`;
+            }
+
+            guild.channels.resolve(config.starboard).send(parsedMessage || "",{
+                embed: await createRichEmbed(reactionMessage),
+                allowedMentions: {
+                    parse: []
+                }
             });
             db.run(/*sql*/`INSERT INTO Starred VALUES (?)`, [messageReaction.message.id]);
             starActive = false;
@@ -804,7 +819,7 @@ client.on("guildMemberRemove", async (guildMember) => {
 });
 
 client.on("messageDelete", async (message) => {
-    if (message.content === undefined);
+    if (message.content === undefined) return;
     if (message.content.startsWith(".")) { return; }
     if (!message.author.bot) {
         if (message.attachments.array().length !== 0) {
@@ -817,7 +832,7 @@ client.on("messageDelete", async (message) => {
 
 client.on("voiceStateUpdate", (oldState, newState) => {
     //* channel ping roles
-    //#region 
+    //#region
     if (oldState.channel != undefined) {
         if (oldState.channel.parentID === config.vccategory) {
             config.voiceroles.forEach(array => {

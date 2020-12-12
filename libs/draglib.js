@@ -1,5 +1,5 @@
-const path = require("path");
-const Discord = require("discord.js");
+import path from "path";
+import Discord from "discord.js";
 
 //! Libraries
 //* defines multipliers for string
@@ -13,7 +13,7 @@ const delayStringMultipliers = {
 };
 
 //* converts string to datetime format
-function convertDelayStringToMS(str, defaultUnit = "m") {
+export function convertDelayStringToMS(str, defaultUnit = "m") {
     const regex = /^([0-9]+)\s*([wdhms])?[a-z]*\s*/;
     let match;
     let ms = 0;
@@ -35,7 +35,10 @@ function convertDelayStringToMS(str, defaultUnit = "m") {
 }
 
 //* creates rich embed quote
-async function createRichEmbed(message) {
+/**
+ * @param {Discord.Message} message
+ */
+export async function createRichEmbed(message) {
     return new Promise((embedOut) => {
         setTimeout(() => {
             var embed = new Discord.MessageEmbed()
@@ -67,6 +70,3 @@ async function createRichEmbed(message) {
         }, 1000, "Oops, something went wrong");
     });
 }
-
-module.exports.convertDelayStringToMS = convertDelayStringToMS;
-module.exports.createRichEmbed = createRichEmbed;
