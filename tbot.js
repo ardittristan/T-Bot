@@ -21,6 +21,10 @@ var quotes = JSON.parse(readFileSync("./quotes.json", "utf8"));
 import googleSpreadsheet from "google-spreadsheet";
 const { GoogleSpreadsheet } = googleSpreadsheet;
 const doc = new GoogleSpreadsheet(config.spreadsheetid);
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 //* Attachments
 const hazeImg = new Discord.MessageAttachment("https://i.imgur.com/ahU3Ke0.png", "Haze.png");
