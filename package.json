@@ -19,7 +19,7 @@
     "images-downloader": "github:soatok/images-downloader#ba05ef7",
     "lodash.sample": "^4.2.1",
     "sharp": "^0.27.0",
-    "sqlite3": "^5.0.0",
+    "sqlite3": "^5.0.3",
     "svg2img": "^0.9.0",
     "twemoji-parser": "^13.0.0"
   },
